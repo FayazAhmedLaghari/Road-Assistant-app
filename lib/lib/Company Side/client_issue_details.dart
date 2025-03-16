@@ -174,7 +174,7 @@ class ClientIssueDetails extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 1,
               fontWeight: FontWeight.w500,
               color: isLink ? Color(0xFF001E62) : Colors.grey,
               decoration:

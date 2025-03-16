@@ -1,7 +1,12 @@
 import 'package:firebase_app/firebase_options.dart';
+import 'package:firebase_app/lib/Company%20Side/CompanyProfile.dart';
+import 'package:firebase_app/lib/User%20Side/UserProfile.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'lib/Company Side/Location_Picker.dart';
+import 'lib/Company Side/Personality_Identity.dart';
 import 'lib/Company Side/SplashScreen.dart';
+import 'lib/Company Side/Tabbar.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,7 +43,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: Splashscreen(),
+      home: Hometab(),
     );
   }
 }

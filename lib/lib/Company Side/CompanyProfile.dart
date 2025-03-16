@@ -5,8 +5,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'Location_Picker.dart';
 import 'Tabbar.dart';
 
 class CompanyProfile extends StatefulWidget {
@@ -20,11 +24,9 @@ class _UserProfileState extends State<CompanyProfile> {
   String? _uploadedImageUrl;
   bool _isUploadingImage = false;
   bool _isSavingData = false;
-
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _contactController = TextEditingController();
-
   // 📷 Pick Image from Gallery
   Future<void> _pickImage() async {
     final pickedFile =
@@ -44,32 +46,25 @@ class _UserProfileState extends State<CompanyProfile> {
       );
       return;
     }
-
     setState(() {
       _isUploadingImage = true;
     });
-
     try {
       final String cloudName =
           "dgbjqewiy"; // Replace with Cloudinary cloud name
       final String uploadPreset = "imageuplaod"; // Replace with upload preset
-
       final Uri uri =
           Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload");
-
       var request = http.MultipartRequest("POST", uri)
         ..fields['upload_preset'] = uploadPreset
         ..files.add(await http.MultipartFile.fromPath('file', _image!.path));
-
       var response = await request.send();
-
       if (response.statusCode == 200) {
         final responseData = await response.stream.bytesToString();
         final jsonResponse = json.decode(responseData);
         setState(() {
           _uploadedImageUrl = jsonResponse["secure_url"];
         });
-
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Image uploaded successfully!"),
@@ -95,6 +90,33 @@ class _UserProfileState extends State<CompanyProfile> {
     }
   }
 
+  // Function to select location
+  LatLng? selectedLocation;
+  Future<void> _pickLocation() async {
+    LatLng? location = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => LocationPicker()),
+    );
+    if (location != null) {
+      setState(() {
+        selectedLocation = location;
+      });
+
+      try {
+        List<Placemark> placemarks = await placemarkFromCoordinates(
+            location.latitude, location.longitude);
+        if (placemarks.isNotEmpty) {
+          setState(() {
+            _addressController.text =
+                "${placemarks.first.street}, ${placemarks.first.locality}";
+          });
+        }
+      } catch (e) {
+        print("Error fetching address: $e");
+      }
+    }
+  }
+
   // 📝 Store User Data in Firestore
   Future<void> _storeUserData() async {
     if (_contactController.text.length != 11) {
@@ -111,26 +133,21 @@ class _UserProfileState extends State<CompanyProfile> {
       );
       return;
     }
-
     setState(() {
       _isSavingData = true;
     });
-
     try {
       User? user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         throw Exception("User is not authenticated!");
       }
-
       // Fetch existing user data to retain current image if no new upload
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('Company')
           .doc(user.uid)
           .get();
-
       String? existingImageUrl = userDoc.exists ? userDoc['imageUrl'] : null;
       String imageUrlToSave = _uploadedImageUrl ?? existingImageUrl ?? "";
-
       await FirebaseFirestore.instance.collection('Company').doc(user.uid).set({
         'name': _nameController.text.trim(),
         'address': _addressController.text.trim(),
@@ -246,13 +263,14 @@ class _UserProfileState extends State<CompanyProfile> {
                   const SizedBox(height: 15),
                   TextField(
                     controller: _addressController,
-                    decoration: customInputDecoration(
-                      "Enter your address",
-                      Icons.home,
+                    decoration: InputDecoration(
+                      labelText: "Enter your address",
+                      prefixIcon: Icon(Icons.home),
                       suffixIcon: IconButton(
                         icon: Icon(Icons.location_on, color: Color(0xFF001E62)),
-                        onPressed: () {},
+                        onPressed: _pickLocation,
                       ),
+                      border: OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 15),

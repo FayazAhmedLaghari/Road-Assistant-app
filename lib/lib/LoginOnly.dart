@@ -21,7 +21,6 @@ class _LoginOnlyState extends State<loginOnly> {
   void _login() async {
     String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
-
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -42,35 +41,25 @@ class _LoginOnlyState extends State<loginOnly> {
           .collection('users') // Assuming 'users' is your Firestore collection
           .doc(userCredential.user!.uid)
           .get();
-
       if (userDoc.exists) {
         String userType = userDoc['userType']; // Get the userType field
-
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Login Successful!"),
             backgroundColor: Colors.green,
           ),
         );
-
         // Navigate based on userType
         if (userType == "User") {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => HomeScreen()),
           );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => Hometab()),
-          );
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("User data not found!"),
-            backgroundColor: Colors.red,
-          ),
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => Hometab()),
         );
       }
     } catch (e) {

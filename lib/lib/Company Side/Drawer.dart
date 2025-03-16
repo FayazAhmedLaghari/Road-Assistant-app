@@ -1,11 +1,13 @@
+import 'package:firebase_app/lib/Company%20Side/Tabbar.dart';
+import 'package:firebase_app/lib/HelpSupportScreen.dart';
 import 'package:flutter/material.dart';
-import '../HelpSupportScreen.dart';
-import '../User Side/Register.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'CompanyNotification.dart';
-import 'Tabbar.dart';
+import '../User Side/Register.dart';
 
 class CompanyDrawer extends StatelessWidget {
   const CompanyDrawer({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -54,13 +56,25 @@ class CompanyDrawer extends StatelessWidget {
                     context,
                     iconPath: 'assets/dashboard.png',
                     title: "Dashboard",
-                    destination: Hometab(),
+                    destination: CompanyNotificationsScreen(),
                   ),
-                  buildMenuItem(
-                    context,
-                    iconPath: 'assets/home2.jpg',
-                    title: "Add/Edit Services",
-                    destination: Hometab(),
+
+                  // Add/Edit Services - Opens Dialog Instead of New Screen
+                  ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Image.asset('assets/home2.jpg', width: 24),
+                    ),
+                    title: Text(
+                      "Add/Edit Services",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                    onTap: () {
+                      _showAddServiceDialog(context); // ✅ Opens Add Dialog
+                    },
                   ),
                   buildMenuItem(
                     context,
@@ -129,6 +143,35 @@ class CompanyDrawer extends StatelessWidget {
     );
   }
 
+  // ✅ Fix 1: Re-Adding `buildMenuItem` Function
+  Widget buildMenuItem(
+    BuildContext context, {
+    required String iconPath,
+    required String title,
+    required Widget destination,
+  }) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: Colors.white,
+        child: Image.asset(iconPath, width: 24),
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+        ),
+      ),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => destination),
+        );
+      },
+    );
+  }
+
+  // ✅ Fix 2: Re-Adding `_showLogoutDialog`
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -162,30 +205,107 @@ class CompanyDrawer extends StatelessWidget {
     );
   }
 
-  Widget buildMenuItem(
-    BuildContext context, {
-    required String iconPath,
-    required String title,
-    required Widget destination,
-  }) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: Colors.white,
-        child: Image.asset(iconPath, width: 24),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-        ),
-      ),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => destination),
+  void _showAddServiceDialog(BuildContext context) {
+    TextEditingController customerController = TextEditingController();
+    TextEditingController vehicleTypeController = TextEditingController();
+    TextEditingController vehicleBrandController = TextEditingController();
+    TextEditingController vehicleModelController = TextEditingController();
+    TextEditingController fuelTypeController = TextEditingController();
+    TextEditingController plateNumberController = TextEditingController();
+    FirebaseFirestore _firestore = FirebaseFirestore.instance;
+    String companyId = "2PEn04QtiMXkNk1h6Qe3Vk4fE2"; // 🔹 Replace if needed
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Add New Service"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: customerController,
+                decoration: InputDecoration(labelText: "Customer Name"),
+              ),
+              TextField(
+                controller: vehicleTypeController,
+                decoration: InputDecoration(labelText: "Vehicle Type"),
+              ),
+              TextField(
+                controller: vehicleBrandController,
+                decoration: InputDecoration(labelText: "Vehicle Brand"),
+              ),
+              TextField(
+                controller: vehicleModelController,
+                decoration: InputDecoration(labelText: "Vehicle Model"),
+              ),
+              TextField(
+                controller: fuelTypeController,
+                decoration: InputDecoration(labelText: "Fuel Type"),
+              ),
+              TextField(
+                controller: plateNumberController,
+                decoration: InputDecoration(labelText: "Plate Number"),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                _addNewService(
+                  _firestore,
+                  companyId,
+                  customerController.text,
+                  vehicleTypeController.text,
+                  vehicleBrandController.text,
+                  vehicleModelController.text,
+                  fuelTypeController.text,
+                  plateNumberController.text,
+                );
+                Navigator.pop(context);
+              },
+              child: Text("Add"),
+            ),
+          ],
         );
       },
     );
+  }
+
+  void _addNewService(
+    FirebaseFirestore firestore,
+    String companyId,
+    String customerName,
+    String vehicleType,
+    String vehicleBrand,
+    String vehicleModel,
+    String fuelType,
+    String plateNumber,
+  ) async {
+    if (customerName.isEmpty ||
+        vehicleType.isEmpty ||
+        vehicleBrand.isEmpty ||
+        vehicleModel.isEmpty ||
+        fuelType.isEmpty ||
+        plateNumber.isEmpty) return;
+
+    await firestore
+        .collection('Company')
+        .doc(companyId)
+        .collection('done_services')
+        .add({
+      'customer_name': customerName,
+      'vehicle_type': vehicleType,
+      'vehicle_brand': vehicleBrand,
+      'vehicle_model': vehicleModel,
+      'fuel_type': fuelType,
+      'plate_number': plateNumber,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    print("✅ Service Added Successfully!");
   }
 }

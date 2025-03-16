@@ -1,6 +1,7 @@
 import 'package:email_otp/email_otp.dart';
 import 'package:flutter/material.dart';
 import 'Company Side/CompanyProfile.dart';
+
 class OTPVerificationScreen extends StatefulWidget {
   const OTPVerificationScreen({super.key});
   @override
