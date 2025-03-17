@@ -1,6 +1,4 @@
 import 'package:firebase_app/firebase_options.dart';
-import 'package:firebase_app/lib/Company%20Side/Tabbar.dart';
-import 'package:firebase_app/lib/Company%20Side/tow_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'lib/Company Side/SplashScreen.dart';
@@ -40,7 +38,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: Hometab(),
+      home: Splashscreen(),
     );
   }
 }
