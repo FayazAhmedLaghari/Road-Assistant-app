@@ -1,4 +1,5 @@
 import 'package:firebase_app/lib/Company%20Side/Tabbar.dart';
+import 'package:firebase_app/lib/Company%20Side/Track.dart';
 import 'package:firebase_app/lib/HelpSupportScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -98,7 +99,7 @@ class CompanyDrawer extends StatelessWidget {
                     context,
                     iconPath: 'assets/service_his.png',
                     title: "Service History",
-                    destination: Hometab(),
+                    destination: Track(),
                   ),
                   buildMenuItem(
                     context,
