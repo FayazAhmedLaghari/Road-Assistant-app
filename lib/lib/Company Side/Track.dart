@@ -16,7 +16,6 @@ class Track extends StatelessWidget {
             _buildHeader(context),
             _buildServiceRequestList(),
             _buildServiceHistory(),
-            _buildBottomButtons(),
           ],
         ),
       ),
@@ -56,21 +55,84 @@ class Track extends StatelessWidget {
       ),
     );
   }
+Widget _buildServiceRequestList() {
+  return Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Service Request List",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        SizedBox(height: 10),
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('selectedServices') // Fetching from Firestore
+              .orderBy('timestamp', descending: true)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return Center(child: Text("No service requests available."));
+            }
 
-  Widget _buildServiceRequestList() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Service Request List",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          SizedBox(height: 10),
-          _serviceCard(isRequest: true),
-        ],
-      ),
-    );
-  }
+            var serviceRequests = snapshot.data!.docs;
+
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: serviceRequests.length,
+              itemBuilder: (context, index) {
+                var serviceData = serviceRequests[index].data() as Map<String, dynamic>;
+                var serviceType = serviceData['serviceType'] ?? 'Unknown';
+                var serviceName = serviceData['service'] ?? 'Unknown';
+                var timestamp = serviceData['timestamp'] as Timestamp?;
+
+                String formattedDate = timestamp != null
+                    ? "${timestamp.toDate().toLocal()}"
+                    : "Unknown time";
+
+                return Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          serviceType,
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        Text(serviceName),
+                        SizedBox(height: 10),
+                        Text(
+                          formattedDate,
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        // Center(
+                        //   child: ElevatedButton(
+                        //     onPressed: () {
+                        //       // Handle completion action here
+                        //     },
+                        //     style: ElevatedButton.styleFrom(
+                        //         backgroundColor: Color(0xFF001E62)),
+                        //     child: Text("Done", style: TextStyle(color: Colors.white)),
+                        //   ),
+                        // )
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildServiceHistory() {
   return Padding(
@@ -169,53 +231,19 @@ class Track extends StatelessWidget {
               height: 10,
             ),
             if (isRequest)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF001E62)),
-                    child: Text("Done", style: TextStyle(color: Colors.white)),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF001E62)),
-                    child: Text("Locate client",
-                        style: TextStyle(color: Colors.white)),
-                  ),
-                ],
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF001E62)),
+                  child: Text("Done", style: TextStyle(color: Colors.white)),
+                ),
               )
             else
               Text("Tue 7 Jun 11:21 AM",
                   style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildBottomButtons() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.black,
-              side: BorderSide(color: Colors.black),
-            ),
-            onPressed: () {},
-            child: Text("Cancel"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF001E62)),
-            onPressed: () {},
-            child: Text("Help", style: TextStyle(color: Colors.white)),
-          ),
-        ],
       ),
     );
   }

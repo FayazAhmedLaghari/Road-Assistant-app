@@ -1,3 +1,4 @@
+import 'package:firebase_app/lib/Company%20Side/ServiceProvide.dart';
 import 'package:firebase_app/lib/Company%20Side/Tabbar.dart';
 import 'package:firebase_app/lib/Company%20Side/Track.dart';
 import 'package:firebase_app/lib/HelpSupportScreen.dart';
@@ -81,7 +82,7 @@ class CompanyDrawer extends StatelessWidget {
                     context,
                     iconPath: 'assets/service_request.png',
                     title: "Service Requests",
-                    destination: Hometab(),
+                    destination: ServiceProvide(),
                   ),
                   buildMenuItem(
                     context,
