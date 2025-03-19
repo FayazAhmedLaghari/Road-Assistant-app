@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
 import '../Company Side/CompanyVerficationCode.dart';
 import '../LoginOnly.dart';
 import 'VerificationCode.dart';
@@ -38,7 +37,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       ));
       return;
     }
-
     if (_passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text("Enter  your password"),
@@ -99,13 +97,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         );
 
         // Navigate to OTP verification after a short delay to let the user see the message
-        Future.delayed(const Duration(seconds: 2), () {
-          Navigator.push(
+        Future.delayed(const Duration(seconds: 2), () async {
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => userType == "User"
-                  ? VerificationCode(correctOTP: generatedOtp)
-                  : Companyverficationcode(correctOTP: generatedOtp),
+                  ? VerificationCode(
+                      correctOTP: generatedOtp,
+                      onResendOTP: () => sendOTP(recipientEmail, generatedOtp))
+                  : CompanyVerificationCode(
+                      correctOTP: generatedOtp,
+                      onResendOTP: () =>
+                          sendOTP(recipientEmail, generatedOtp) // ✅ Correct
+                      // Pass the function, not the OTP
+                      ),
             ),
           );
         });

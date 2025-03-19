@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'Company Side/About.dart';
+
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({Key? key}) : super(key: key);
 
@@ -81,7 +83,12 @@ class HelpSupportScreen extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => AboutPage()));
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0xFF001E62),
                           padding: const EdgeInsets.symmetric(vertical: 16.0),

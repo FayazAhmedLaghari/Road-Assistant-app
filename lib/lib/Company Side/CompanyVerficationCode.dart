@@ -2,16 +2,20 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'CompanyProfile.dart';
 
-class Companyverficationcode extends StatefulWidget {
+class CompanyVerificationCode extends StatefulWidget {
   final String correctOTP;
-  Companyverficationcode({super.key, required this.correctOTP});
+  final VoidCallback onResendOTP;
+  CompanyVerificationCode(
+      {super.key, required this.correctOTP, required this.onResendOTP});
+
   @override
-  State<Companyverficationcode> createState() => _VerificationCodeState();
+  State<CompanyVerificationCode> createState() => _VerificationCodeState();
 }
 
-class _VerificationCodeState extends State<Companyverficationcode> {
+class _VerificationCodeState extends State<CompanyVerificationCode> {
   late Timer _timer;
-  int _secondsRemaining = 300;
+  int _secondsRemaining = 60;
+  bool _canResend = false;
   final TextEditingController _otpController = TextEditingController();
   @override
   void initState() {
@@ -24,11 +28,32 @@ class _VerificationCodeState extends State<Companyverficationcode> {
       setState(() {
         if (_secondsRemaining > 0) {
           _secondsRemaining--;
-        } else {
-          timer.cancel();
+        }
+        if (_secondsRemaining == 0) {
+          _canResend = true;
+          _timer.cancel();
         }
       });
     });
+  }
+
+  void _resendOTP() {
+    if (_canResend) {
+      widget.onResendOTP(); // Call the passed function
+      setState(() {
+        _secondsRemaining = 60; // Reset to 60 seconds
+        _canResend = false; // Disable the button
+      });
+      _startTimer(); // Restart the countdown timer
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("A new OTP has been sent!"),
+          backgroundColor: Colors.blue,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override
@@ -40,27 +65,20 @@ class _VerificationCodeState extends State<Companyverficationcode> {
 
   void _verifyOTP() async {
     String enteredOTP = _otpController.text.trim();
-    print("Entered OTP: $enteredOTP");
-    print("Correct OTP: ${widget.correctOTP}");
-
     if (enteredOTP == widget.correctOTP) {
-      // Show success message before navigating
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("OTP verified successfully! Redirecting..."),
           backgroundColor: Colors.green,
-          duration: Duration(seconds: 2), // Show for 2 seconds
+          duration: Duration(seconds: 2),
         ),
       );
-      // Wait for the snackbar to show before navigating
       await Future.delayed(Duration(seconds: 2));
-      // Navigate to the profile screen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => CompanyProfile()),
       );
     } else {
-      // Show error message for incorrect OTP
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Incorrect OTP. Please try again."),
@@ -121,6 +139,15 @@ class _VerificationCodeState extends State<Companyverficationcode> {
                     "Time Remaining: ${(_secondsRemaining ~/ 60).toString().padLeft(2, '0')}:${(_secondsRemaining % 60).toString().padLeft(2, '0')}",
                     style: const TextStyle(fontSize: 16, color: Colors.black),
                   ),
+                  const SizedBox(height: 20),
+                  if (_canResend)
+                    Center(
+                      child: TextButton(
+                        onPressed: _resendOTP,
+                        child: Text("Resend OTP",
+                            style: TextStyle(color: Colors.blue, fontSize: 16)),
+                      ),
+                    ),
                   const SizedBox(height: 40),
                   SizedBox(
                     width: double.infinity,

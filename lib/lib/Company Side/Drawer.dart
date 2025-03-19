@@ -1,4 +1,5 @@
 import 'package:firebase_app/lib/Company%20Side/Tabbar.dart';
+import 'package:firebase_app/lib/Company%20Side/Track.dart';
 import 'package:firebase_app/lib/HelpSupportScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -98,7 +99,7 @@ class CompanyDrawer extends StatelessWidget {
                     context,
                     iconPath: 'assets/service_his.png',
                     title: "Service History",
-                    destination: Hometab(),
+                    destination: Track(),
                   ),
                   buildMenuItem(
                     context,
@@ -212,8 +213,10 @@ class CompanyDrawer extends StatelessWidget {
     TextEditingController vehicleModelController = TextEditingController();
     TextEditingController fuelTypeController = TextEditingController();
     TextEditingController plateNumberController = TextEditingController();
+
     FirebaseFirestore _firestore = FirebaseFirestore.instance;
     String companyId = "2PEn04QtiMXkNk1h6Qe3Vk4fE2"; // 🔹 Replace if needed
+
     showDialog(
       context: context,
       builder: (context) {
@@ -305,7 +308,6 @@ class CompanyDrawer extends StatelessWidget {
       'plate_number': plateNumber,
       'timestamp': FieldValue.serverTimestamp(),
     });
-
     print("✅ Service Added Successfully!");
   }
 }
