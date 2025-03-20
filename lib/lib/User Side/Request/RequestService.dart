@@ -1,17 +1,35 @@
 import 'package:flutter/material.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../home_screen.dart';
 import 'RequestConfirmation.dart';
 
-class RequestServiceScreen extends StatelessWidget {
-  final List<Map<String, dynamic>> services = [
-    {'icon': Icons.tire_repair, 'label': 'Flat tire'},
-    {'icon': Icons.local_shipping, 'label': 'Towing Service'},
-    {'icon': Icons.thermostat, 'label': 'Engine Heat'},
-    {'icon': Icons.battery_charging_full, 'label': 'Battery Jump Start'},
-    {'icon': Icons.lock, 'label': 'Key lock assistance'},
-    {'icon': Icons.miscellaneous_services, 'label': 'Other service'},
-  ];
+class RequestServiceScreen extends StatefulWidget {
+  @override
+  _RequestServiceScreenState createState() => _RequestServiceScreenState();
+}
+
+class _RequestServiceScreenState extends State<RequestServiceScreen> {
+  List<Map<String, dynamic>> services = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchServices();
+  }
+
+  void fetchServices() async {
+    QuerySnapshot querySnapshot =
+        await FirebaseFirestore.instance.collection('selectedServices').get();
+    List<Map<String, dynamic>> fetchedServices = querySnapshot.docs
+        .map((doc) => {
+              "name": doc["service"],
+              "icon": Icons.miscellaneous_services,
+            })
+        .toList();
+    setState(() {
+      services = fetchedServices;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +37,6 @@ class RequestServiceScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // Gradient Header
           Container(
             height: 120,
             decoration: const BoxDecoration(
@@ -44,7 +61,7 @@ class RequestServiceScreen extends StatelessWidget {
                     );
                   },
                 ),
-                const SizedBox(height: 16), // Reduced spacing
+                const SizedBox(height: 16),
                 const Center(
                   child: Text(
                     'Request a service',
@@ -58,7 +75,6 @@ class RequestServiceScreen extends StatelessWidget {
               ],
             ),
           ),
-          // Main Content
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -108,7 +124,7 @@ class RequestServiceScreen extends StatelessWidget {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                           content: Text(
-                                              'Icon clicked: ${service['label']}')),
+                                              'Icon clicked: ${service['name']}')),
                                     );
                                   },
                                   child: Container(
@@ -126,7 +142,7 @@ class RequestServiceScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 8.0),
                                 Text(
-                                  service['label'],
+                                  service['name'],
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     color: Colors.black,

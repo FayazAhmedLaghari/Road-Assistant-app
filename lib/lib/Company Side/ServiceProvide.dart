@@ -11,6 +11,25 @@ class ServiceProvide extends StatefulWidget {
 class _ServiceProvideState extends State<ServiceProvide> {
   String? selectedServiceType;
   String? selectedService;
+  Map<String, List<Map<String, dynamic>>> serviceOptions = {
+    "Car": [
+      {"name": "Flat tire", "icon": Icons.tire_repair},
+      {"name": "Towing Service", "icon": Icons.local_shipping},
+      {"name": "Engine Heat", "icon": Icons.warning},
+      {"name": "Battery Jump Start", "icon": Icons.battery_charging_full},
+    ],
+    "MotorCycle": [
+      {"name": "Flat tire", "icon": Icons.tire_repair},
+      {"name": "Engine Check", "icon": Icons.settings},
+      {"name": "Key Lock", "icon": Icons.vpn_key},
+    ],
+    "Rickshaw": [
+      {"name": "Engine Check", "icon": Icons.settings},
+      {"name": "Towing Service", "icon": Icons.local_shipping},
+      {"name": "Battery Jump Start", "icon": Icons.battery_charging_full},
+    ],
+  };
+  List<Map<String, dynamic>> availableServices = [];
 
   void saveToFirestore() {
     if (selectedServiceType != null && selectedService != null) {
@@ -23,6 +42,14 @@ class _ServiceProvideState extends State<ServiceProvide> {
         SnackBar(content: Text("Saved: $selectedServiceType - $selectedService")),
       );
     }
+  }
+
+  void updateAvailableServices(String type) {
+    setState(() {
+      selectedServiceType = type;
+      availableServices = serviceOptions[type] ?? [];
+      selectedService = null;
+    });
   }
 
   @override
@@ -90,14 +117,7 @@ class _ServiceProvideState extends State<ServiceProvide> {
               crossAxisCount: 2,
               crossAxisSpacing: 20,
               mainAxisSpacing: 20,
-              children: [
-                _serviceCard("Flat tire", Icons.tire_repair),
-                _serviceCard("Towing Service", Icons.local_shipping),
-                _serviceCard("Engine Heat", Icons.warning),
-                _serviceCard("Battery Jump Start", Icons.battery_charging_full),
-                _serviceCard("Key Lock", Icons.vpn_key),
-                _serviceCard("Engine Check", Icons.settings),
-              ],
+              children: availableServices.map((service) => _serviceCard(service["name"], service["icon"])).toList(),
             ),
           ),
           if (selectedServiceType != null && selectedService != null)
@@ -105,9 +125,8 @@ class _ServiceProvideState extends State<ServiceProvide> {
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton(
                 onPressed: saveToFirestore,
-                style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFF001E62)),
-                child: Text("Done",style: TextStyle(color: Colors.white),),
+                style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF001E62)),
+                child: Text("Done", style: TextStyle(color: Colors.white)),
               ),
             ),
         ],
@@ -119,11 +138,7 @@ class _ServiceProvideState extends State<ServiceProvide> {
   Widget _serviceType(String title, String imagePath) {
     bool isSelected = selectedServiceType == title;
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedServiceType = title;
-        });
-      },
+      onTap: () => updateAvailableServices(title),
       child: Column(
         children: [
           Container(
@@ -132,8 +147,7 @@ class _ServiceProvideState extends State<ServiceProvide> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: isSelected ? Color(0xFF001E62) : Colors.grey, width: 2),
+              border: Border.all(color: isSelected ? Color(0xFF001E62) : Colors.grey, width: 2),
               boxShadow: [
                 BoxShadow(
                   color: Colors.grey.withOpacity(0.3),
@@ -183,51 +197,17 @@ class _ServiceProvideState extends State<ServiceProvide> {
           selectedService = title;
         });
       },
-      child: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: Container(
-          padding: EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.5),
-                spreadRadius: 2,
-                blurRadius: 5,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Stack(
-            alignment: Alignment.center,
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircleAvatar(
-                    backgroundColor: Color(0xFF001E62),
-                    radius: 35,
-                    child: Icon(icon, size: 35, color: Colors.white),
-                  ),
-                  const SizedBox(height: 15),
-                  Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF001E62),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              if (isSelected)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Icon(Icons.check_circle, color: Color(0xFF001E62), size: 22),
-                ),
+              Icon(icon, size: 50, color: Color(0xFF001E62)),
+              SizedBox(height: 10),
+              Text(title, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
         ),
