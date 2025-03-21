@@ -15,6 +15,7 @@ class loginOnly extends StatefulWidget {
 class _LoginOnlyState extends State<loginOnly> {
   bool _isObscure = true;
   bool _isLoading = false;
+  String userType = "User";
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -37,31 +38,17 @@ class _LoginOnlyState extends State<loginOnly> {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
           email: email, password: password);
       // Fetch user type from Firestore
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users') // Assuming 'users' is your Firestore collection
-          .doc(userCredential.user!.uid)
-          .get();
-      if (userDoc.exists) {
-        String userType = userDoc['userType']; // Get the userType field
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Login Successful!"),
-            backgroundColor: Colors.green,
-          ),
-        );
-        // Navigate based on userType
-        if (userType == "User") {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => HomeScreen()),
-          );
-        }
-      } else {
-        Navigator.pushReplacement(
+      Future.delayed(const Duration(seconds: 2), () async {
+        await Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => Hometab()),
+          MaterialPageRoute(
+              builder: (context) =>
+                  userType == "User" ?  HomeScreen() : Hometab() // ✅ Correct
+              // Pass the function, not the OTP
+              ),
         );
-      }
+        
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

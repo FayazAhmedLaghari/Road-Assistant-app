@@ -1,3 +1,4 @@
+import 'package:firebase_app/lib/Company%20Side/ServiceProvide.dart';
 import 'package:firebase_app/lib/Company%20Side/Tabbar.dart';
 import 'package:firebase_app/lib/Company%20Side/Track.dart';
 import 'package:firebase_app/lib/HelpSupportScreen.dart';
@@ -8,7 +9,6 @@ import '../User Side/Register.dart';
 
 class CompanyDrawer extends StatelessWidget {
   const CompanyDrawer({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -81,7 +81,7 @@ class CompanyDrawer extends StatelessWidget {
                     context,
                     iconPath: 'assets/service_request.png',
                     title: "Service Requests",
-                    destination: Hometab(),
+                    destination: ServiceProvide(),
                   ),
                   buildMenuItem(
                     context,
@@ -308,6 +308,7 @@ class CompanyDrawer extends StatelessWidget {
       'plate_number': plateNumber,
       'timestamp': FieldValue.serverTimestamp(),
     });
+
     print("✅ Service Added Successfully!");
   }
 }

@@ -1,17 +1,45 @@
 import 'package:flutter/material.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../home_screen.dart';
 import 'RequestConfirmation.dart';
 
-class RequestServiceScreen extends StatelessWidget {
-  final List<Map<String, dynamic>> services = [
-    {'icon': Icons.tire_repair, 'label': 'Flat tire'},
-    {'icon': Icons.local_shipping, 'label': 'Towing Service'},
-    {'icon': Icons.thermostat, 'label': 'Engine Heat'},
-    {'icon': Icons.battery_charging_full, 'label': 'Battery Jump Start'},
-    {'icon': Icons.lock, 'label': 'Key lock assistance'},
-    {'icon': Icons.miscellaneous_services, 'label': 'Other service'},
-  ];
+class RequestServiceScreen extends StatefulWidget {
+  @override
+  _RequestServiceScreenState createState() => _RequestServiceScreenState();
+}
+
+class _RequestServiceScreenState extends State<RequestServiceScreen> {
+  List<Map<String, dynamic>> services = [];
+  String? selectedService;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchServices();
+  }
+
+  void fetchServices() async {
+    QuerySnapshot querySnapshot =
+        await FirebaseFirestore.instance.collection('selectedServices').get();
+    List<Map<String, dynamic>> fetchedServices = querySnapshot.docs
+        .map((doc) => {
+              "name": doc["service"],
+              "icon": Icons.miscellaneous_services,
+            })
+        .toList();
+    setState(() {
+      services = fetchedServices;
+    });
+  }
+
+  void saveSelectedService() async {
+    if (selectedService != null) {
+      await FirebaseFirestore.instance
+          .collection('userSelectedService')
+          .doc('currentService')
+          .set({'service': selectedService});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +47,7 @@ class RequestServiceScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // Gradient Header
+          // Header Section
           Container(
             height: 120,
             decoration: const BoxDecoration(
@@ -44,10 +72,10 @@ class RequestServiceScreen extends StatelessWidget {
                     );
                   },
                 ),
-                const SizedBox(height: 16), // Reduced spacing
+                const SizedBox(height: 16),
                 const Center(
                   child: Text(
-                    'Request a service',
+                    'Request a Service',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -58,7 +86,6 @@ class RequestServiceScreen extends StatelessWidget {
               ],
             ),
           ),
-          // Main Content
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -86,12 +113,25 @@ class RequestServiceScreen extends StatelessWidget {
                       itemCount: services.length,
                       itemBuilder: (context, index) {
                         final service = services[index];
+                        bool isSelected = selectedService == service['name'];
+
                         return GestureDetector(
-                          onTap: () {},
+                          onTap: () {
+                            setState(() {
+                              selectedService = service['name'];
+                            });
+                          },
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8.0),
+                              color:
+                                  isSelected ? Colors.blue[100] : Colors.white,
+                              borderRadius: BorderRadius.circular(12.0),
+                              border: Border.all(
+                                color: isSelected
+                                    ? Color(0xFF001E62)
+                                    : Colors.transparent,
+                                width: 2,
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black26,
@@ -100,39 +140,44 @@ class RequestServiceScreen extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            child: Stack(
+                              alignment: Alignment.center,
                               children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Icon clicked: ${service['label']}')),
-                                    );
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: const Color(0xFF001E62),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: isSelected
+                                            ? Colors.blue
+                                            : Color(0xFF001E62),
+                                      ),
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Icon(
+                                        service['icon'],
+                                        color: Colors.white,
+                                        size: 40.0,
+                                      ),
                                     ),
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Icon(
-                                      service['icon'],
-                                      color: Colors.white,
-                                      size: 40.0,
+                                    const SizedBox(height: 8.0),
+                                    Text(
+                                      service['name'],
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 14.0,
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ),
-                                const SizedBox(height: 8.0),
-                                Text(
-                                  service['label'],
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 14.0,
+                                if (isSelected)
+                                  Positioned(
+                                    top: 5,
+                                    right: 5,
+                                    child: Icon(Icons.check_circle,
+                                        color: Color(0xFF001E62), size: 24),
                                   ),
-                                ),
                               ],
                             ),
                           ),
@@ -145,22 +190,27 @@ class RequestServiceScreen extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF001E62),
+                        backgroundColor: selectedService != null
+                            ? const Color(0xFF001E62)
+                            : Colors.grey,
                         padding: const EdgeInsets.symmetric(vertical: 16.0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                       ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => RequestConfirmation(),
-                          ),
-                        );
-                      },
+                      onPressed: selectedService != null
+                          ? () {
+                              saveSelectedService(); // Save selected service
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => RequestConfirmation(),
+                                ),
+                              );
+                            }
+                          : null,
                       child: const Text(
-                        'Confirm issue',
+                        'Confirm Issue',
                         style: TextStyle(fontSize: 16.0, color: Colors.white),
                       ),
                     ),

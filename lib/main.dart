@@ -3,9 +3,9 @@ import 'package:firebase_app/lib/Company%20Side/CompanyProfile.dart';
 import 'package:firebase_app/lib/Company%20Side/Tabbar.dart';
 import 'package:firebase_app/lib/SplashScreen.dart';
 import 'package:firebase_app/lib/User%20Side/UserProfile.dart';
+import 'package:firebase_app/lib/User%20Side/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'lib/Company Side/CompanyVerficationCode.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: Hometab(),
+      home: HomeScreen(),
     );
   }
 }
