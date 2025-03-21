@@ -32,8 +32,24 @@ class _GetServicesState extends State<GetServices> {
       });
     }
   }
+void sendRequest(String requestId) async {
+  DocumentSnapshot requestDoc = await FirebaseFirestore.instance
+      .collection('requests')
+      .doc(requestId)
+      .get();
 
-  void sendRequest(String requestId) {
+  if (requestDoc.exists) {
+    Map<String, dynamic> requestData = requestDoc.data() as Map<String, dynamic>;
+
+    // Add the request to the pending_requests collection
+    await FirebaseFirestore.instance.collection('pending_requests').add({
+      'userId': 'user123', // Replace with actual user ID
+      'service': requestData['service'],
+      'location': requestData['location'],
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    // Navigate to Home Screen
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -41,6 +57,7 @@ class _GetServicesState extends State<GetServices> {
       ),
     );
   }
+}
 
   @override
   Widget build(BuildContext context) {
