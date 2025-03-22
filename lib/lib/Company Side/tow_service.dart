@@ -1,13 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_app/lib/Company%20Side/BuildServiceCard.dart';
 import 'package:firebase_app/lib/Company%20Side/CompanyNotification.dart';
 import 'package:firebase_app/lib/Company%20Side/Drawer.dart';
-import 'package:firebase_app/lib/User%20Side/service_card2.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TowServiceScreen extends StatelessWidget {
   const TowServiceScreen({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -15,41 +13,7 @@ class TowServiceScreen extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 100,
-            decoration: BoxDecoration(
-                gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: <Color>[Color(0xFF001E62), Colors.white])),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Builder(
-                    builder: (context) => IconButton(
-                      icon: Icon(Icons.menu),
-                      onPressed: () {
-                        Scaffold.of(context).openDrawer();
-                      },
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.notifications), // Another Icon Button
-                    onPressed: () {
-                       Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CompanyNotificationsScreen(),
-                      ),
-                    );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
+          _buildAppBar(context),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 25),
             child: _buildHeader(),
@@ -62,10 +26,10 @@ class TowServiceScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildRequestList(),
-                    // SizedBox(height: 20),
-                    // Text("Done Service", 
-                    //     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    // _buildDoneServiceList(),
+                    SizedBox(height: 20),
+                    Text("Done Service", 
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    _buildDoneServiceList(),
                   ],
                 ),
               ),
@@ -77,6 +41,42 @@ class TowServiceScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildAppBar(BuildContext context) {
+    return Container(
+      height: 100,
+      decoration: BoxDecoration(
+          gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: <Color>[Color(0xFF001E62), Colors.white])));
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Builder(
+              builder: (context) => IconButton(
+                icon: Icon(Icons.menu),
+                onPressed: () {
+                  Scaffold.of(context).openDrawer();
+                },
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.notifications),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CompanyNotificationsScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      );
+  }
   Widget _buildHeader() {
     return Stack(clipBehavior: Clip.none, children: [
       Container(
@@ -84,8 +84,7 @@ class TowServiceScreen extends StatelessWidget {
         width: double.infinity,
         decoration: BoxDecoration(
             color: Color(0xFF001E62), borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: EdgeInsets.only(top: 20),
+        child: Center(
           child: Text("EeZee Tow",
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -96,52 +95,61 @@ class TowServiceScreen extends StatelessWidget {
       ),
     ]);
   }
-Widget _buildRequestList() {
-  return StreamBuilder(
-    stream: FirebaseFirestore.instance
-        .collection('pending_requests')
-        .orderBy('timestamp', descending: true)
-        .snapshots(),
-    builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return Center(child: CircularProgressIndicator());
-      }
-      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-        return Center(child: Text("No pending service requests."));
-      }
 
-      return ListView.builder(
-        shrinkWrap: true,
-        physics: NeverScrollableScrollPhysics(),
-        itemCount: snapshot.data!.docs.length,
-        itemBuilder: (context, index) {
-          var request = snapshot.data!.docs[index];
+  Widget _buildRequestList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('requests').orderBy('timestamp', descending: true).snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(child: Text("No active service requests"));
+        }
 
-          // Use null-aware operators to avoid null errors
-          String service = request['service']?.toString() ?? 'Unknown Service';
-          String location = request['location']?.toString() ?? 'Unknown Location';
-
-          return BuildServiceCard(
-            title: service,
-            address: location,
-            rating: 4.5, // Placeholder rating
-          );
-        },
-      );
-    },
-  );
-}
-
-  Widget _buildDoneServiceList() {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      itemCount: 3, // Adjust number as needed
-      itemBuilder: (context, index) => _buildDoneServiceCard(),
+        var requests = snapshot.data!.docs;
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: requests.length,
+          itemBuilder: (context, index) {
+            var request = requests[index];
+            return BuildRequestCard(
+              carNo: request['car_no'],
+              carColor: request['car_color'],
+              location: request['location'],
+              details: request['details'],
+              contactNo: request['contact_no'],
+            );
+          },
+        );
+      },
     );
   }
 
-  Widget _buildDoneServiceCard() {
+  Widget _buildDoneServiceList() {
+    return Container(); // Implement logic for completed services if needed
+  }
+}
+
+class BuildRequestCard extends StatelessWidget {
+  final String carNo;
+  final String carColor;
+  final String location;
+  final String details;
+  final String contactNo;
+
+  const BuildRequestCard({
+    required this.carNo,
+    required this.carColor,
+    required this.location,
+    required this.details,
+    required this.contactNo,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
       color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -152,19 +160,28 @@ Widget _buildRequestList() {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Mr. Wesilewski",
+             Text("$carNo",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             SizedBox(height: 4),
-            Text("Car | Toyota | Innova | Petrol | DL 01 MN 5832",
+            Text("$carColor | $location | $details | $contactNo | $carNo",
                 style: TextStyle(color: Colors.grey[700])),
             SizedBox(height: 8),
             Align(
-              alignment: Alignment.centerLeft,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF001E62)),
-                child: Text("Done", style: TextStyle(color: Colors.white)),
+              alignment: Alignment.center,
+              child: Row(
+                children: [
+                  ElevatedButton(
+                    onPressed: () => _showPopup(context, true),
+                    style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF001E62)),
+                    child: Text("Accept", style: TextStyle(color: Colors.white)),
+                  ),
+                  SizedBox(width: 20,),
+                   ElevatedButton(
+                onPressed: () => _showPopup(context, false),
+                style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF001E62)),
+                child: Text("Decline", style: TextStyle(color: Colors.white)),
+              ),
+                ],
               ),
             ),
           ],
@@ -173,3 +190,43 @@ Widget _buildRequestList() {
     );
   }
 }
+
+  void _showPopup(BuildContext context, bool isAccept) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.notifications, size: 50, color: Color(0xFF001E62)),
+            SizedBox(height: 10),
+            Text("You have 1 request to repair", style: TextStyle(fontSize: 16)),
+            SizedBox(height: 5),
+            TextButton(
+              onPressed: () {},
+              child: Text("Details", style: TextStyle(color: Color(0xFF001E62), fontWeight: FontWeight.bold)),
+            ),
+            SizedBox(height: 10),
+
+            Column(
+              children: [
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[400]),
+                  child: Text("Decline", style: TextStyle(color: Colors.white)),
+                ),
+                SizedBox(height: 10,),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF001E62)),
+                  child: Text("Accept", style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
