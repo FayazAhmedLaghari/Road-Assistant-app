@@ -43,6 +43,7 @@ dependencies:
   email_otp: ^3.0.0
   firebase_storage: ^12.2.0
   flutter_rating_bar: ^4.0.1
+  shimmer: ^3.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

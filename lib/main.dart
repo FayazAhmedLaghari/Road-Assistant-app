@@ -1,9 +1,5 @@
 import 'package:firebase_app/firebase_options.dart';
 import 'package:firebase_app/lib/Company%20Side/SplashScreen.dart';
-import 'package:firebase_app/lib/Company%20Side/tow_service.dart';
-import 'package:firebase_app/lib/User%20Side/Request/GetService.dart';
-import 'package:firebase_app/lib/User%20Side/Request/RequestService.dart';
-import 'package:firebase_app/lib/User%20Side/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -42,7 +38,8 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: Splashscreen(),
+      home:Splashscreen(),
     );
   }
 }
+
