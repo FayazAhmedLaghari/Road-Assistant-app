@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:js';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
@@ -28,7 +30,7 @@ class _PersonalIdentityState extends State<PersonalIdentity> {
   // Function to select location
   Future<void> _pickLocation() async {
     LatLng? location = await Navigator.push(
-      context,
+      context as BuildContext,
       MaterialPageRoute(builder: (context) => LocationPicker()),
     );
     if (location != null) {
@@ -48,7 +50,7 @@ class _PersonalIdentityState extends State<PersonalIdentity> {
           });
 
           // Show success message in Snackbar
-          ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.of(context as BuildContext).showSnackBar(
             SnackBar(
               content: Text("Location selected successfully!"),
               backgroundColor: Colors.green,
@@ -75,11 +77,11 @@ class _PersonalIdentityState extends State<PersonalIdentity> {
       setState(() {
         uploadedFileUrl = responseData['secure_url'];
       });
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context as BuildContext).showSnackBar(
         SnackBar(content: Text("File uploaded successfully!")),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context as BuildContext).showSnackBar(
         SnackBar(content: Text("File upload failed!")),
       );
     }
@@ -105,12 +107,11 @@ class _PersonalIdentityState extends State<PersonalIdentity> {
         employeesController.text.isEmpty ||
         legalNumberController.text.isEmpty ||
         selectedLocation == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context as BuildContext).showSnackBar(
         SnackBar(content: Text('Please fill in all fields before submitting!')),
       );
       return; // Stop the function from proceeding
     }
-
     // Reference to Firestore collection
     CollectionReference users =
         FirebaseFirestore.instance.collection('Personal_identity');
@@ -128,7 +129,7 @@ class _PersonalIdentityState extends State<PersonalIdentity> {
       'legalizationLetter': uploadedFileUrl, // Cloudinary uploaded file URL
     });
     // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(context as BuildContext).showSnackBar(
       SnackBar(content: Text('Data saved successfully!')),
     );
   }
@@ -138,140 +139,148 @@ class _PersonalIdentityState extends State<PersonalIdentity> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 120,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF001E62), Colors.white],
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(
+            height: 120,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF001E62), Colors.white],
+              ),
+            ),
+            child: Stack(
+              alignment: AlignmentDirectional.center,
+              children: [
+                AppBar(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  leading: IconButton(
+                    icon: Icon(Icons.arrow_back, color: Colors.black, size: 35),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ),
-              ),
-              child: Stack(
-                alignment: AlignmentDirectional.center,
-                children: [
-                  AppBar(
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    leading: IconButton(
-                      icon:
-                          Icon(Icons.arrow_back, color: Colors.black, size: 35),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ),
-                  Positioned(
-                    top: 95,
-                    left: 20,
-                    child: Text(
-                      "Personal Identity",
-                      textAlign: TextAlign.start,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-              child: Text(
-                "Please fill the identity for reasons to data for us",
-                style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[400]),
-              ),
-            ),
-            _buildTextField("Branch", branchController),
-            _buildTextField("Branch Address", branchAddressController),
-            // Location Picker
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: GestureDetector(
-                onTap: _pickLocation,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
-                          spreadRadius: 2,
-                          blurRadius: 5,
-                          offset: Offset(0, 3)),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: locationController,
-                    decoration: InputDecoration(
-                      labelText: "Choose Location From map",
-                      prefixIcon: Icon(Icons.home),
-                      suffixIcon: IconButton(
-                        icon: Icon(Icons.location_on, color: Color(0xFF001E62)),
-                        onPressed: _pickLocation,
-                      ),
-                      border: OutlineInputBorder(),
+                Positioned(
+                  top: 95,
+                  left: 20,
+                  child: Text(
+                    "Personal Identity",
+                    textAlign: TextAlign.start,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
                   ),
                 ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+            child: Text(
+              "Please fill the identity for reasons to data for us",
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[400]),
+            ),
+          ),
+          _buildTextField("Branch", branchController),
+          _buildTextField("Branch Address", branchAddressController),
+          // Location Picker
+          TextField(
+            controller: locationController,
+            decoration: InputDecoration(
+              labelText: "Choose Location From map",
+              prefixIcon: Icon(Icons.home),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.location_on, color: Color(0xFF001E62)),
+                onPressed: _pickLocation,
               ),
             ),
-            _buildTextField("Number of Employees", employeesController),
-            _buildTextField("Legal Number", legalNumberController),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 20),
-              child: Text('Upload legalization letter here',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-              child: GestureDetector(
-                onTap: _pickFile,
-                child: Container(
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
-                          spreadRadius: 2,
-                          blurRadius: 5,
-                          offset: Offset(0, 3))
-                    ],
-                  ),
-                  child: Center(
-                      child: Text("Choose File",
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold))),
-                ),
-              ),
-            ),
-            if (_selectedFile != null)
-              Padding(
-                  padding: EdgeInsets.all(10),
-                  child: Text("File selected successfully")),
+          ),
 
-            SizedBox(height: 50),
-            Center(
-              child: ElevatedButton(
-                onPressed: _saveDataToFirestore,
-                child: Text("Submit"),
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF001E62)),
+          _buildTextField("Number of Employees", employeesController),
+          _buildTextField("Legal Number", legalNumberController),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 20),
+            child: Text('Upload legalization letter here',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+            child: GestureDetector(
+              onTap: _pickFile,
+              child: Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.grey.withOpacity(0.5),
+                        spreadRadius: 2,
+                        blurRadius: 5,
+                        offset: Offset(0, 3))
+                  ],
+                ),
+                child: Center(
+                    child: Text("Choose File",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold))),
               ),
             ),
-          ],
-        ),
+          ),
+          if (_selectedFile != null)
+            Padding(
+                padding: EdgeInsets.all(10),
+                child: Text("File selected successfully")),
+
+          SizedBox(height: 50),
+          Center(
+            child: ElevatedButton(
+              onPressed: _saveDataToFirestore,
+              child: Text("Submit"),
+              style:
+                  ElevatedButton.styleFrom(backgroundColor: Color(0xFF001E62)),
+            ),
+          ),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              // _buildArrowButton(
+              //     context, Icons.arrow_back, Colors.grey[300]!, Colors.black),
+              // ✅ Pass context
+              const SizedBox(width: 10),
+              _buildArrowButton(context, Icons.arrow_forward,
+                  const Color(0xFF001E62), Colors.white),
+            ],
+          ),
+        ]),
       ),
     );
   }
+}
+
+Widget _buildArrowButton(
+    BuildContext context, IconData icon, Color bgColor, Color iconColor) {
+  return Container(
+    decoration: BoxDecoration(
+      color: bgColor,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: IconButton(
+      icon: Icon(icon, color: iconColor),
+      onPressed: () {
+        Navigator.push(
+          context, // ✅ Pass the correct context
+          MaterialPageRoute(builder: (context) => const IssueDetails()),
+        );
+      },
+    ),
+  );
 }
 
 Widget _buildTextField(String label, TextEditingController controller) {

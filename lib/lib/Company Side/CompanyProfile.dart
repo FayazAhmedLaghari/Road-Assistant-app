@@ -264,13 +264,27 @@ class _UserProfileState extends State<CompanyProfile> {
                   TextField(
                     controller: _addressController,
                     decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.grey[200],
                       labelText: "Enter your address",
                       prefixIcon: Icon(Icons.home),
                       suffixIcon: IconButton(
                         icon: Icon(Icons.location_on, color: Color(0xFF001E62)),
                         onPressed: _pickLocation,
                       ),
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Color(0xFF001E62)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            BorderSide(color: Color(0xFF001E62), width: 2),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 15),

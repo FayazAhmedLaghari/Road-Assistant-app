@@ -1,3 +1,4 @@
+import 'package:firebase_app/lib/User%20Side/Client_Issue.dart';
 import 'package:flutter/material.dart';
 
 import '../Company Side/setting_screen.dart';
@@ -91,6 +92,12 @@ class SideDrawer extends StatelessWidget {
                     icon: Icons.help_outline,
                     title: "Help & Support",
                     destination: HelpSupportScreen(),
+                  ),
+                  buildMenuItem(
+                    context,
+                    icon: Icons.help_outline,
+                    title: "Client Issue",
+                    destination: ClientIssueForm(),
                   ),
                   ListTile(
                     leading: CircleAvatar(

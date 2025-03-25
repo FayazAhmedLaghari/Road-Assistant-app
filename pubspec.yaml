@@ -50,6 +50,10 @@ dependencies:
   location: ^6.0.2
   google_places_flutter: ^2.1.0
   url_launcher: ^6.3.1
+  firebase_messaging: ^15.1.0
+  flutter_local_notifications: ^18.0.1
+  shimmer: ^3.0.0
+  shared_preferences: ^2.2.3
 dev_dependencies:
   flutter_test:
     sdk: flutter

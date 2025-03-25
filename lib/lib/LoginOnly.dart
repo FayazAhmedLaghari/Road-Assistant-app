@@ -43,11 +43,10 @@ class _LoginOnlyState extends State<loginOnly> {
           context,
           MaterialPageRoute(
               builder: (context) =>
-                  userType == "User" ?  HomeScreen() : Hometab() // ✅ Correct
+                  userType == "User" ? HomeScreen() : Hometab() // ✅ Correct
               // Pass the function, not the OTP
               ),
         );
-        
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

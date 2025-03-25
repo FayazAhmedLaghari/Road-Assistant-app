@@ -1,28 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'BuildServiceCard.dart';
-import 'CompanyNotification.dart';
 import 'Drawer.dart';
+import 'CompanyNotification.dart';
 
-class TowServiceScreen extends StatefulWidget {
+class TowServiceScreen extends StatelessWidget {
   const TowServiceScreen({super.key});
-
-  @override
-  _TowServiceScreenState createState() => _TowServiceScreenState();
-}
-
-class _TowServiceScreenState extends State<TowServiceScreen> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final String companyId = "2PEn04QtiMXkNk1h6Qe3Vk4fE2"; // 🔹 Replace if needed
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      drawer: CompanyDrawer(),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeaderBar(context),
+          _buildAppBar(context),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 25),
             child: _buildHeader(),
@@ -34,7 +26,11 @@ class _TowServiceScreenState extends State<TowServiceScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildDoneServiceList(),
+                    _buildRequestList(),
+                    SizedBox(height: 20),
+                    // Text("Done Service",
+                    //     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    // _buildDoneServiceList(),
                   ],
                 ),
               ),
@@ -42,18 +38,10 @@ class _TowServiceScreenState extends State<TowServiceScreen> {
           ),
         ],
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   backgroundColor: Colors.blue,
-      //   onPressed: () {
-      //     _showAddServiceDialog(context);
-      //   },
-      //   child: Icon(Icons.add, color: Colors.white),
-      // ),
-      drawer: CompanyDrawer(),
     );
   }
 
-  Widget _buildHeaderBar(BuildContext context) {
+  Widget _buildAppBar(BuildContext context) {
     return Container(
       height: 100,
       decoration: BoxDecoration(
@@ -82,7 +70,8 @@ class _TowServiceScreenState extends State<TowServiceScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const CompanyNotificationsScreen()),
+                    builder: (context) => const CompanyNotificationsScreen(),
+                  ),
                 );
               },
             ),
@@ -93,105 +82,52 @@ class _TowServiceScreenState extends State<TowServiceScreen> {
   }
 
   Widget _buildHeader() {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          height: 80,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Color(0xFF001E62),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: EdgeInsets.only(top: 20),
-            child: Text("EeZee Tow",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold)),
-          ),
+    return Stack(clipBehavior: Clip.none, children: [
+      Container(
+        height: 80,
+        width: double.infinity,
+        decoration: BoxDecoration(
+            color: Color(0xFF001E62), borderRadius: BorderRadius.circular(12)),
+        child: Center(
+          child: Text("EeZee Tow",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold)),
         ),
-      ],
-    );
+      ),
+    ]);
   }
 
-  Widget _buildDoneServiceList() {
+  Widget _buildRequestList() {
     return StreamBuilder<QuerySnapshot>(
-      stream: _firestore
-          .collection('Company')
-          .doc(companyId)
-          .collection('done_services')
+      stream: FirebaseFirestore.instance
+          .collection('requests')
+          .orderBy('timestamp', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text("No services available."));
+          return Center(child: Text("No active service requests"));
         }
 
-        var services = snapshot.data!.docs;
-
+        var requests = snapshot.data!.docs;
         return ListView.builder(
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
-          itemCount: services.length,
+          itemCount: requests.length,
           itemBuilder: (context, index) {
-            var service = services[index];
-            var serviceId = service.id;
-
-            var data = service.data() as Map<String, dynamic>;
-            var customerName = data['customer_name'] ?? 'Unknown';
-            var vehicleType = data['vehicle_type'] ?? 'Unknown';
-            var vehicleBrand = data['vehicle_brand'] ?? 'Unknown';
-            var vehicleModel = data['vehicle_model'] ?? 'Unknown';
-            var fuelType = data['fuel_type'] ?? 'Unknown';
-            var plateNumber = data['plate_number'] ?? 'Unknown';
-
-            return Card(
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              elevation: 6,
-              margin: EdgeInsets.symmetric(vertical: 8),
-              child: Padding(
-                padding: const EdgeInsets.all(15.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(customerName,
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 4),
-                    Text(
-                      "$vehicleType | $vehicleBrand | $vehicleModel | $fuelType | $plateNumber",
-                      style: TextStyle(color: Colors.grey[700]),
-                    ),
-                    SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF001E62)),
-                          onPressed: () => _acceptService(serviceId, data),
-                          child: Text("Accept",
-                              style: TextStyle(color: Colors.white)),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF001E62)),
-                          onPressed: () => _declineService(serviceId, data),
-                          child: Text("Decline",
-                              style: TextStyle(color: Colors.white)),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+            var request = requests[index];
+            return BuildRequestCard(
+              requestId: request.id,
+              carNo: request['car_no'],
+              carColor: request['car_color'],
+              location: request['location'],
+              details: request['details'],
+              contactNo: request['contact_no'],
             );
           },
         );
@@ -199,33 +135,87 @@ class _TowServiceScreenState extends State<TowServiceScreen> {
     );
   }
 
-  void _acceptService(String serviceId, Map<String, dynamic> data) async {
-    await _firestore
-        .collection('Company')
-        .doc(companyId)
-        .collection('accepted_services')
-        .doc(serviceId)
-        .set(data);
-    await _firestore
-        .collection('Company')
-        .doc(companyId)
-        .collection('done_services')
-        .doc(serviceId)
-        .delete();
+  Widget _buildDoneServiceList() {
+    return Container(); // Implement logic for completed services if needed
+  }
+}
+
+class BuildRequestCard extends StatelessWidget {
+  final String requestId;
+  final String carNo;
+  final String carColor;
+  final String location;
+  final String details;
+  final String contactNo;
+
+  const BuildRequestCard({
+    required this.requestId,
+    required this.carNo,
+    required this.carColor,
+    required this.location,
+    required this.details,
+    required this.contactNo,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 6,
+      margin: EdgeInsets.symmetric(vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("$carNo",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            SizedBox(height: 4),
+            Text("$carColor | $location | $details | $contactNo",
+                style: TextStyle(color: Colors.grey[700])),
+            SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () =>
+                      _updateRequestStatus(context, requestId, "accepted"),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF001E62)),
+                  child: Text("Accept", style: TextStyle(color: Colors.white)),
+                ),
+                ElevatedButton(
+                  onPressed: () => _deleteRequest(context, requestId),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF001E62)),
+                  child: Text("Decline", style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  void _declineService(String serviceId, Map<String, dynamic> data) async {
-    await _firestore
-        .collection('Company')
-        .doc(companyId)
-        .collection('declined_services')
-        .doc(serviceId)
-        .set(data);
-    await _firestore
-        .collection('Company')
-        .doc(companyId)
-        .collection('done_services')
-        .doc(serviceId)
+  void _updateRequestStatus(
+      BuildContext context, String requestId, String status) async {
+    await FirebaseFirestore.instance
+        .collection('requests')
+        .doc(requestId)
+        .update({'status': status});
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("Request marked as $status")));
+  }
+
+  void _deleteRequest(BuildContext context, String requestId) async {
+    await FirebaseFirestore.instance
+        .collection('requests')
+        .doc(requestId)
         .delete();
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("Request removed")));
   }
 }

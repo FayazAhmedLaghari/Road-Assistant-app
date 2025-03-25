@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../../Company Side/Location_Picker.dart';
 import 'GetService.dart';
 
 class RequestConfirmation extends StatefulWidget {
@@ -13,7 +10,7 @@ class RequestConfirmation extends StatefulWidget {
 }
 
 class _RequestConfirmationState extends State<RequestConfirmation> {
-  final _formKey = GlobalKey<FormState>(); // Form key for validation
+  final _formKey = GlobalKey<FormState>();
 
   final TextEditingController carNoController = TextEditingController();
   final TextEditingController carColorController = TextEditingController();
@@ -22,6 +19,32 @@ class _RequestConfirmationState extends State<RequestConfirmation> {
   final TextEditingController contactNoController = TextEditingController();
 
   bool isFormValid = false;
+  String selectedService = "Loading...";
+  String selectedVehicle = "Loading...";
+
+  @override
+  void initState() {
+    super.initState();
+    fetchSelectedData();
+  }
+
+  Future<void> fetchSelectedData() async {
+    try {
+      DocumentSnapshot serviceDoc = await FirebaseFirestore.instance
+          .collection('userSelectedService')
+          .doc('currentService')
+          .get();
+
+      if (serviceDoc.exists) {
+        setState(() {
+          selectedService = serviceDoc['service'] ?? "Unknown Service";
+          selectedVehicle = serviceDoc['vehicle'] ?? "Unknown Vehicle";
+        });
+      }
+    } catch (e) {
+      print("Error fetching service: $e");
+    }
+  }
 
   void checkFormValid() {
     setState(() {
@@ -34,58 +57,40 @@ class _RequestConfirmationState extends State<RequestConfirmation> {
   }
 
   Future<void> saveRequestToFirestore() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      print("Form validation failed");
+      return;
+    }
 
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    print("Saving request to Firestore...");
 
     try {
-      await firestore.collection('requests').add({
+      await FirebaseFirestore.instance.collection('requests').add({
         'car_no': carNoController.text,
         'car_color': carColorController.text,
         'location': locationController.text,
         'details': detailsController.text,
         'contact_no': contactNoController.text,
+        'selected_service': selectedService,
+        'selected_vehicle': selectedVehicle,
         'timestamp': FieldValue.serverTimestamp(),
       });
+
+      print("Request submitted successfully");
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Request Submitted Successfully")),
       );
 
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => GetServices()),
       );
     } catch (e) {
+      print("Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
       );
-    }
-  }
-
-  LatLng? selectedLocation;
-  Future<void> _pickLocation() async {
-    LatLng? location = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => LocationPicker()),
-    );
-    if (location != null) {
-      setState(() {
-        selectedLocation = location;
-      });
-
-      try {
-        List<Placemark> placemarks = await placemarkFromCoordinates(
-            location.latitude, location.longitude);
-        if (placemarks.isNotEmpty) {
-          setState(() {
-            locationController.text =
-                "${placemarks.first.street}, ${placemarks.first.locality}";
-          });
-        }
-      } catch (e) {
-        print("Error fetching address: $e");
-      }
     }
   }
 
@@ -134,31 +139,30 @@ class _RequestConfirmationState extends State<RequestConfirmation> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                "Flat tire",
-                style: TextStyle(
+              Text(
+                selectedService,
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
                   color: Colors.black,
+                ),
+              ),
+              Text(
+                "Vehicle: $selectedVehicle",
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black54,
                 ),
               ),
               buildSection("Vehicle Details", Icons.directions_car, [
                 buildInputField("Car No", carNoController),
                 buildInputField("Car Color", carColorController),
               ]),
-              const SizedBox(height: 15),
-              TextField(
-                controller: locationController,
-                decoration: InputDecoration(
-                  labelText: "Enter your address",
-                  prefixIcon: Icon(Icons.home),
-                  suffixIcon: IconButton(
-                    icon: Icon(Icons.location_on, color: Color(0xFF001E62)),
-                    onPressed: _pickLocation,
-                  ),
-                  border: OutlineInputBorder(),
-                ),
-              ),
+              buildSection("Location", Icons.location_on, [
+                buildInputField("Enter Location", locationController,
+                    icon: Icons.location_on),
+              ]),
               buildSection("Details", Icons.list, [
                 buildInputField("Describe the issue", detailsController,
                     maxLines: 5),
@@ -174,7 +178,8 @@ class _RequestConfirmationState extends State<RequestConfirmation> {
                   child: ElevatedButton(
                     onPressed: isFormValid ? saveRequestToFirestore : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF001E62),
+                      backgroundColor:
+                          isFormValid ? const Color(0xFF001E62) : Colors.grey,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -221,22 +226,6 @@ class _RequestConfirmationState extends State<RequestConfirmation> {
     );
   }
 
-  Widget buildAddressField(
-      TextEditingController controller, VoidCallback onLocationPick) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: "Enter your address",
-        prefixIcon: const Icon(Icons.home),
-        suffixIcon: IconButton(
-          icon: const Icon(Icons.location_on, color: Color(0xFF001E62)),
-          onPressed: onLocationPick,
-        ),
-        border: const OutlineInputBorder(),
-      ),
-    );
-  }
-
   Widget buildInputField(String hint, TextEditingController controller,
       {IconData? icon, int maxLines = 1}) {
     return Padding(
@@ -244,6 +233,8 @@ class _RequestConfirmationState extends State<RequestConfirmation> {
       child: TextFormField(
         controller: controller,
         maxLines: maxLines,
+        onChanged: (value) =>
+            checkFormValid(), // Update form validation dynamically
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey[500]),
@@ -251,19 +242,9 @@ class _RequestConfirmationState extends State<RequestConfirmation> {
               const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.0),
-            borderSide: const BorderSide(width: 1, color: Color(0xFF001E62)),
           ),
           suffixIcon: icon != null ? Icon(icon, color: Colors.grey[600]) : null,
         ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return "This field is required";
-          }
-          return null;
-        },
-        onChanged: (value) {
-          checkFormValid();
-        },
       ),
     );
   }

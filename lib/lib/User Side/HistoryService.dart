@@ -1,4 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import 'HistoryInfo.dart';
 
@@ -69,11 +72,100 @@ class ServiceHistory extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: services.length,
-              itemBuilder: (context, index) {
-                return buildServiceCard(context, services[index]);
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('selectedServices') // Fetching from Firestore
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(child: Text("No service requests available."));
+                }
+
+                var serviceRequests = snapshot.data!.docs;
+                return ListView.builder(
+                  shrinkWrap: true,
+                  // physics: NeverScrollableScrollPhysics(),
+                  itemCount: serviceRequests.length,
+                  itemBuilder: (context, index) {
+                    var serviceData =
+                        serviceRequests[index].data() as Map<String, dynamic>;
+                    var serviceType = serviceData['serviceType'] ?? 'Unknown';
+                    var serviceName = serviceData['service'] ?? 'Unknown';
+                    var timestamp = serviceData['timestamp'] as Timestamp?;
+
+                    String formattedDate = timestamp != null
+                        ? "${timestamp.toDate().toLocal()}"
+                        : "Unknown time";
+
+                    return Card(
+                      shadowColor: Color.fromARGB(255, 32, 121, 194),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              serviceType,
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            Text(serviceName),
+                            SizedBox(height: 10),
+                            Text(
+                              formattedDate,
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            // Center(
+                            //   child: ElevatedButton(
+                            //     onPressed: () {
+                            //       // Handle completion action here
+                            //     },
+                            //     style: ElevatedButton.styleFrom(
+                            //         backgroundColor: Color(0xFF001E62)),
+                            //     child: Text("Done", style: TextStyle(color: Colors.white)),
+                            //   ),
+                            // )
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
               },
+            ),
+          ),
+          Center(
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => HistoryInformation(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF001E62),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+              ),
+              child: const Text(
+                " Details ",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
         ],
@@ -188,6 +280,5 @@ class Service {
   final String title;
   final String address;
   final String time;
-
   Service(this.title, this.address, this.time);
 }
