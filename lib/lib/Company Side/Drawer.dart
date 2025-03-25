@@ -1,14 +1,52 @@
-import 'package:firebase_app/lib/Company%20Side/ServiceProvide.dart';
-import 'package:firebase_app/lib/Company%20Side/Tabbar.dart';
-import 'package:firebase_app/lib/Company%20Side/Track.dart';
-import 'package:firebase_app/lib/HelpSupportScreen.dart';
-import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'CompanyNotification.dart';
 import '../User Side/Register.dart';
+import 'ServiceProvide.dart';
+import 'Tabbar.dart';
+import 'Track.dart';
+import '../HelpSupportScreen.dart';
 
-class CompanyDrawer extends StatelessWidget {
+class CompanyDrawer extends StatefulWidget {
   const CompanyDrawer({super.key});
+
+  @override
+  _CompanyDrawerState createState() => _CompanyDrawerState();
+}
+
+class _CompanyDrawerState extends State<CompanyDrawer> {
+  String companyName = "Loading...";
+  String companyEmail = "Loading...";
+  String profileImage = ""; // Default is empty, fallback to placeholder
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCompanyData();
+  }
+
+  Future<void> _fetchCompanyData() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('Company')
+          .doc(user.uid)
+          .get();
+
+      if (doc.exists) {
+        setState(() {
+          companyName = doc['name'] ?? "No Name";
+          companyEmail = user.email ?? "No Email";
+          profileImage = doc['imageUrl'] ?? ""; // Cloudinary Image URL
+        });
+      }
+    } catch (e) {
+      print("Error fetching company data: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +55,7 @@ class CompanyDrawer extends StatelessWidget {
         color: const Color(0xFF001E62), // Dark blue background
         child: Column(
           children: [
-            // Header Section
+            // 🔹 **Header Section**
             Container(
               padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
               decoration: const BoxDecoration(
@@ -25,23 +63,26 @@ class CompanyDrawer extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 40,
                     backgroundColor: Colors.white,
-                    backgroundImage: AssetImage('assets/profile_image.png'),
+                    backgroundImage: profileImage.isNotEmpty
+                        ? NetworkImage(profileImage)
+                        : const AssetImage('assets/profile_image.png')
+                            as ImageProvider,
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    'jack',
-                    style: TextStyle(
+                  Text(
+                    companyName,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const Text(
-                    'jack@yupmail.com',
-                    style: TextStyle(
+                  Text(
+                    companyEmail,
+                    style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 14,
                     ),
@@ -50,7 +91,7 @@ class CompanyDrawer extends StatelessWidget {
               ),
             ),
 
-            // Menu Items Section
+            // 🔹 **Menu Items Section**
             Expanded(
               child: ListView(
                 children: [
@@ -60,25 +101,7 @@ class CompanyDrawer extends StatelessWidget {
                     title: "Dashboard",
                     destination: CompanyNotificationsScreen(),
                   ),
-
-                  // Add/Edit Services - Opens Dialog Instead of New Screen
-                  ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.white,
-                      child: Image.asset('assets/home2.jpg', width: 24),
-                    ),
-                    title: Text(
-                      "Add/Edit Services",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
-                    ),
-                    onTap: () {
-                      _showAddServiceDialog(context); // ✅ Opens Add Dialog
-                    },
-                  ),
-  buildMenuItem(
+                  buildMenuItem(
                     context,
                     iconPath: 'assets/service_request.png',
                     title: "Service Requests",
@@ -90,7 +113,7 @@ class CompanyDrawer extends StatelessWidget {
                     title: "Client Issue Details",
                     destination: Hometab(),
                   ),
-   buildMenuItem(
+                  buildMenuItem(
                     context,
                     iconPath: 'assets/manage_loc.png',
                     title: "Manage Locations",
@@ -108,7 +131,7 @@ class CompanyDrawer extends StatelessWidget {
                     title: "Notifications",
                     destination: CompanyNotificationsScreen(),
                   ),
-  buildMenuItem(
+                  buildMenuItem(
                     context,
                     iconPath: 'assets/account_set.png',
                     title: "Account Settings",
@@ -145,7 +168,7 @@ class CompanyDrawer extends StatelessWidget {
     );
   }
 
-  // ✅ Fix 1: Re-Adding `buildMenuItem` Function
+  // ✅ **Reusable Method for Menu Items**
   Widget buildMenuItem(
     BuildContext context, {
     required String iconPath,
@@ -173,7 +196,7 @@ class CompanyDrawer extends StatelessWidget {
     );
   }
 
-  // ✅ Fix 2: Re-Adding `_showLogoutDialog`
+  // ✅ **Logout Confirmation Dialog**
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -184,14 +207,13 @@ class CompanyDrawer extends StatelessWidget {
           content: const Text("Are you sure you want to logout?"),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text("Cancel",
                   style: TextStyle(color: Color(0xFF001E62))),
             ),
             TextButton(
               onPressed: () {
+                FirebaseAuth.instance.signOut();
                 Navigator.of(context).pop();
                 Navigator.pushReplacement(
                   context,
@@ -205,106 +227,5 @@ class CompanyDrawer extends StatelessWidget {
         );
       },
     );
-  }
-
-  void _showAddServiceDialog(BuildContext context) {
-    TextEditingController customerController = TextEditingController();
-    TextEditingController vehicleTypeController = TextEditingController();
-    TextEditingController vehicleBrandController = TextEditingController();
-    TextEditingController vehicleModelController = TextEditingController();
-    TextEditingController fuelTypeController = TextEditingController();
-    TextEditingController plateNumberController = TextEditingController();
-
-    FirebaseFirestore _firestore = FirebaseFirestore.instance;
-    String companyId = "2PEn04QtiMXkNk1h6Qe3Vk4fE2"; // 🔹 Replace if needed
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Add New Service"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: customerController,
-                decoration: InputDecoration(labelText: "Customer Name"),
-              ),
-              TextField(
-                controller: vehicleTypeController,
-                decoration: InputDecoration(labelText: "Vehicle Type"),
-              ),
-              TextField(
-                controller: vehicleBrandController,
-                decoration: InputDecoration(labelText: "Vehicle Brand"),
-              ),
-              TextField(
-                controller: vehicleModelController,
-                decoration: InputDecoration(labelText: "Vehicle Model"),
-              ),
-              TextField(
-                controller: fuelTypeController,
-                decoration: InputDecoration(labelText: "Fuel Type"),
-              ),
-              TextField(
-                controller: plateNumberController,
-                decoration: InputDecoration(labelText: "Plate Number"),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () {
-                _addNewService(
-                  _firestore,
-                  companyId,
-                  customerController.text,
-                  vehicleTypeController.text,
-                  vehicleBrandController.text,
-                  vehicleModelController.text,
-                  fuelTypeController.text,
-                  plateNumberController.text,
-                );
-                Navigator.pop(context);
-              },
-              child: Text("Add"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _addNewService(
-    FirebaseFirestore firestore,
-    String companyId,
-    String customerName,
-    String vehicleType,
-    String vehicleBrand,
-    String vehicleModel,
-    String fuelType,
-    String plateNumber,
-  ) async {
-    if (customerName.isEmpty || vehicleType.isEmpty || vehicleBrand.isEmpty || vehicleModel.isEmpty || fuelType.isEmpty || plateNumber.isEmpty) return;
-
-    await firestore
-        .collection('Company')
-        .doc(companyId)
-        .collection('done_services')
-        .add({
-      'customer_name': customerName,
-      'vehicle_type': vehicleType,
-      'vehicle_brand': vehicleBrand,
-      'vehicle_model': vehicleModel,
-      'fuel_type': fuelType,
-      'plate_number': plateNumber,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-
-    print("✅ Service Added Successfully!");
   }
 }
