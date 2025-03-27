@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app/lib/User%20Side/home_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -162,7 +163,7 @@ class _UserProfileState extends State<UserProfile> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => loginOnly()),
+        MaterialPageRoute(builder: (context) => HomeScreen()),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -245,12 +246,22 @@ class _UserProfileState extends State<UserProfile> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed:
-                        _isUploadingImage ? null : _uploadImageToCloudinary,
-                    child: _isUploadingImage
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("Upload Image"),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed:
+                          _isUploadingImage ? null : _uploadImageToCloudinary,
+                      child: _isUploadingImage
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text("Upload Image",style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),),
+                                     style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF001E62),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(08)),
+                          ),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   TextField(

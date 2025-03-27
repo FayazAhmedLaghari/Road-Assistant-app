@@ -108,7 +108,7 @@ class TowServiceScreen extends StatelessWidget {
           return Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text("No active service requests"));
+          return Center(child: Text("No any new rides for you"));
         }
 
         var requests = snapshot.data!.docs;

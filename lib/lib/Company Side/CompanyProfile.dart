@@ -230,12 +230,23 @@ class _UserProfileState extends State<CompanyProfile> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed:
-                        _isUploadingImage ? null : _uploadImageToCloudinary,
-                    child: _isUploadingImage
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("Upload Image"),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed:
+                          _isUploadingImage ? null : _uploadImageToCloudinary,
+                      child: _isUploadingImage
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text("Upload Image",style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                                  ),
+                                     style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF001E62),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(08)),
+                        ),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   TextField(
@@ -252,6 +263,7 @@ class _UserProfileState extends State<CompanyProfile> {
                       suffixIcon: IconButton(
                         icon: Icon(Icons.location_on, color: Color(0xFF001E62)),
                         onPressed: () {},
+                        
                       ),
                     ),
                   ),
