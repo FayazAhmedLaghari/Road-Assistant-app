@@ -1,24 +1,9 @@
 import 'package:flutter/material.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'HistoryInfo.dart';
 
 class ServiceHistory extends StatelessWidget {
-  final List<Service> services = [
-    Service(
-      "Flat tire",
-      "Gotham Car Reparation",
-      "Yesterday",
-    ),
-    Service(
-      "Towing Service",
-      "Gotham Car Reparation",
-      "Tue Feb 3, 2025",
-    ),
-    Service("Key lock assistance", "Gotham Car Reparation", "Tue Feb 3, 2025"),
-    Service("Towing Service", "Gotham Car Reparation", "Tue Feb 3, 2025"),
-  ];
-
-  ServiceHistory({super.key});
+  const ServiceHistory({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +12,10 @@ class ServiceHistory extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Container(
             height: 120,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -41,19 +27,16 @@ class ServiceHistory extends StatelessWidget {
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 leading: IconButton(
-                  icon: Icon(
-                    Icons.arrow_back,
-                    color: Colors.black,
-                  ),
+                  icon: const Icon(Icons.arrow_back, color: Colors.black),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
-              Positioned(
+              const Positioned(
                 top: 80,
                 child: Text(
                   "History of Services",
                   style: TextStyle(
-                    fontSize: 32,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
@@ -68,11 +51,42 @@ class ServiceHistory extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
+          // Fetch and display requests from Firestore
           Expanded(
-            child: ListView.builder(
-              itemCount: services.length,
-              itemBuilder: (context, index) {
-                return buildServiceCard(context, services[index]);
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('requests')
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(
+                    child: Text("No service history available"),
+                  );
+                }
+
+                var services = snapshot.data!.docs;
+                return ListView.builder(
+                  itemCount: services.length,
+                  itemBuilder: (context, index) {
+                    var service = services[index].data() as Map<String, dynamic>;
+
+                    return buildServiceCard(
+                      context,
+                      service['selected_service'] ?? "Unknown Service",
+                      service['location'] ?? "Unknown Location",
+                      service['timestamp'] != null
+                          ? (service['timestamp'] as Timestamp)
+                              .toDate()
+                              .toString()
+                          : "Unknown Date",
+                      _getServiceIcon(service['selected_service']),
+                    );
+                  },
+                );
               },
             ),
           ),
@@ -80,9 +94,30 @@ class ServiceHistory extends StatelessWidget {
       ),
     );
   }
+
+  // Map services to their respective icons
+  IconData _getServiceIcon(String? service) {
+    switch (service) {
+      case "Flat tire":
+        return Icons.tire_repair;
+      case "Towing Service":
+        return Icons.local_shipping;
+      case "Engine Heat":
+        return Icons.warning;
+      case "Battery Jump Start":
+        return Icons.battery_charging_full;
+      case "Engine Check":
+        return Icons.settings;
+      case "Key Lock":
+        return Icons.vpn_key;
+      default:
+        return Icons.miscellaneous_services;
+    }
+  }
 }
 
-Widget buildServiceCard(BuildContext context, Service service) {
+// Reusable Card Widget
+Widget buildServiceCard(BuildContext context, String title, String address, String time, IconData icon) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
     child: Container(
@@ -105,89 +140,63 @@ Widget buildServiceCard(BuildContext context, Service service) {
             children: [
               CircleAvatar(
                 radius: 30,
-                child: const Icon(Icons.directions_car,
-                    size: 40, color: Color(0xFF001E62)),
+                backgroundColor: Color(0xFF001E62),
+                child: Icon(icon, size: 32, color: Colors.white),
               ),
-              SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time_filled,
-                          size: 16, color: Colors.black),
-                      const SizedBox(width: 4),
-                      Text(
-                        service.time,
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        service.address,
-                        style: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(width: 10),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => HistoryInformation(),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF001E62),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 5, horizontal: 10),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.access_time_filled, size: 16, color: Colors.black),
+                        const SizedBox(width: 4),
+                        Text(
+                          time,
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                         ),
-                        child: const Text(
-                          "Details",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    "House 19, Road 6 Block D, Islamabad",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
+                      ],
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      address,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HistoryInformation()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF001E62),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                ],
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                ),
+                child: const Text(
+                  "Details",
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
               ),
             ],
-          ),
-          const SizedBox(height: 5),
-          Text(
-            service.title,
-            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ],
       ),
     ),
   );
-}
-
-class Service {
-  final String title;
-  final String address;
-  final String time;
-
-  Service(this.title, this.address, this.time);
 }
