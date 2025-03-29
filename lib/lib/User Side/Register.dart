@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../Company Side/CompanyVerficationCode.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../LoginOnly.dart';
 import 'VerificationCode.dart';
 import 'email_otp.dart';
@@ -30,6 +32,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   void _register() async {
     String recipientEmail = _emailController.text.trim();
 
+    // Check for network connectivity
+    var connectivityResult = await Connectivity().checkConnectivity();
+    if (connectivityResult == ConnectivityResult.none) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("No internet connection. Please check and try again."),
+        backgroundColor: Colors.red,
+      ));
+      return; // Ensure the function stops execution here
+    }
+
     if (recipientEmail.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text("Enter Email"),
@@ -39,7 +51,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
     if (_passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Enter  your password"),
+        content: Text("Enter your password"),
         backgroundColor: Colors.red,
       ));
       return;
@@ -58,7 +70,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       ));
       return;
     }
-
     if (!_isValidPassword(_passwordController.text)) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text(
@@ -78,25 +89,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         email: recipientEmail,
         password: _passwordController.text.trim(),
       );
-      // Generate OTP and send it
-      String generatedOtp = generateOTP(); // ✅ Generate OTP once
 
-      bool otpSent =
-          await sendOTP(recipientEmail, generatedOtp); // ✅ Send the same OTP
+      String generatedOtp = generateOTP();
+      bool otpSent = await sendOTP(recipientEmail, generatedOtp);
       if (otpSent) {
-        print("Stored OTP for verification: $generatedOtp"); // ✅ Debugging
+        print("Stored OTP for verification: $generatedOtp");
 
-        // Show success message before navigating
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-                "Registration successful! Check your email inbox for OTP."),
+            content: Text("Registration successful! Check your email for OTP."),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 3), // Show for 3 seconds
+            duration: Duration(seconds: 3),
           ),
         );
-
-        // Navigate to OTP verification after a short delay to let the user see the message
         Future.delayed(const Duration(seconds: 2), () async {
           await Navigator.push(
             context,
@@ -107,10 +112,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       onResendOTP: () => sendOTP(recipientEmail, generatedOtp))
                   : CompanyVerificationCode(
                       correctOTP: generatedOtp,
-                      onResendOTP: () =>
-                          sendOTP(recipientEmail, generatedOtp) // ✅ Correct
-                      // Pass the function, not the OTP
-                      ),
+                      onResendOTP: () => sendOTP(recipientEmail, generatedOtp)),
             ),
           );
         });
@@ -122,6 +124,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           ),
         );
       }
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Registration failed: ${e.message}"),
+        backgroundColor: Colors.red,
+      ));
+    } on SocketException {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("No internet connection. Please check and try again."),
+        backgroundColor: Colors.red,
+      ));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text("Registration failed: ${e.toString()}"),
@@ -172,6 +184,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     decoration: InputDecoration(
                       hintText: "Enter your email",
                       prefixIcon: Icon(Icons.email, color: Color(0xFF001E62)),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
                     keyboardType: TextInputType.emailAddress,
                     enabled: !_isLoading,
@@ -196,6 +210,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           });
                         },
                       ),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
                     enabled: !_isLoading,
                   ),
@@ -219,6 +235,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           });
                         },
                       ),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
                     enabled: !_isLoading,
                   ),

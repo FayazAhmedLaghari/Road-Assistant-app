@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'GetService.dart';
@@ -65,9 +66,16 @@ class _RequestConfirmationState extends State<RequestConfirmation> {
     print("Saving request to Firestore...");
 
     try {
+      // Get current user ID from Firebase Authentication
+      String? userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) {
+        throw Exception("User is not logged in");
+      }
+
       await FirebaseFirestore.instance.collection('requests').add({
-        'car_no': carNoController.text,
-        'car_color': carColorController.text,
+        'user_id': userId, // ✅ Include user ID
+        'Vehicle_no': carNoController.text,
+        'Vehicle_color': carColorController.text,
         'location': locationController.text,
         'details': detailsController.text,
         'contact_no': contactNoController.text,
@@ -156,8 +164,8 @@ class _RequestConfirmationState extends State<RequestConfirmation> {
                 ),
               ),
               buildSection("Vehicle Details", Icons.directions_car, [
-                buildInputField("Car No", carNoController),
-                buildInputField("Car Color", carColorController),
+                buildInputField(" Vehicle No", carNoController),
+                buildInputField("Vehicle Color", carColorController),
               ]),
               buildSection("Location", Icons.location_on, [
                 buildInputField("Enter Location", locationController,

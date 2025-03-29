@@ -31,7 +31,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
       // Navigate to Verification Code screen if needed
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const LoginOnly()),
+        MaterialPageRoute(builder: (context) => const loginOnly()),
       );
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {

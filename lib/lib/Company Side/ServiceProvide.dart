@@ -11,6 +11,8 @@ class ServiceProvide extends StatefulWidget {
 class _ServiceProvideState extends State<ServiceProvide> {
   String? selectedServiceType;
   String? selectedService;
+  List<String> activeServices = [];
+
   Map<String, List<Map<String, dynamic>>> serviceOptions = {
     "Car": [
       {"name": "Flat tire", "icon": Icons.tire_repair},
@@ -29,27 +31,48 @@ class _ServiceProvideState extends State<ServiceProvide> {
       {"name": "Battery Jump Start", "icon": Icons.battery_charging_full},
     ],
   };
-  List<Map<String, dynamic>> availableServices = [];
+
+  void _fetchSelectedServices() async {
+    QuerySnapshot snapshot =
+        await FirebaseFirestore.instance.collection('selectedServices').get();
+    setState(() {
+      activeServices =
+          snapshot.docs.map((doc) => doc['service'] as String).toList();
+    });
+  }
 
   void saveToFirestore() {
-    if (selectedServiceType != null && selectedService != null) {
+    if (selectedServiceType != null &&
+        selectedService != null &&
+        !activeServices.contains(selectedService)) {
       FirebaseFirestore.instance.collection('selectedServices').add({
         'serviceType': selectedServiceType,
         'service': selectedService,
         'timestamp': FieldValue.serverTimestamp(),
       });
+      setState(() {
+        activeServices.add(selectedService!);
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text("Saved: $selectedServiceType - $selectedService")),
       );
+    } else if (activeServices.contains(selectedService)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("$selectedService is already added.")),
+      );
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSelectedServices();
   }
 
   void updateAvailableServices(String type) {
     setState(() {
       selectedServiceType = type;
-      availableServices = serviceOptions[type] ?? [];
-      selectedService = null;
     });
   }
 
@@ -95,10 +118,8 @@ class _ServiceProvideState extends State<ServiceProvide> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            "Service Provide For",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
+          const Text("Service Provide For",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -109,32 +130,20 @@ class _ServiceProvideState extends State<ServiceProvide> {
             ],
           ),
           const SizedBox(height: 20),
-          const Text(
-            "Your Service",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
+          const Text("Your Service",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           Expanded(
             child: GridView.count(
               crossAxisCount: 2,
               crossAxisSpacing: 20,
               mainAxisSpacing: 20,
-              children: availableServices
+              children: (serviceOptions[selectedServiceType] ?? [])
                   .map((service) =>
                       _serviceCard(service["name"], service["icon"]))
                   .toList(),
             ),
           ),
-          if (selectedServiceType != null && selectedService != null)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton(
-                onPressed: saveToFirestore,
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF001E62)),
-                child: Text("Done", style: TextStyle(color: Colors.white)),
-              ),
-            ),
         ],
       ),
       drawer: CompanyDrawer(),
@@ -142,69 +151,27 @@ class _ServiceProvideState extends State<ServiceProvide> {
   }
 
   Widget _serviceType(String title, String imagePath) {
-    bool isSelected = selectedServiceType == title;
     return GestureDetector(
       onTap: () => updateAvailableServices(title),
       child: Column(
         children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: isSelected ? Color(0xFF001E62) : Colors.grey,
-                  width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.3),
-                  spreadRadius: 2,
-                  blurRadius: 5,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Image.asset(
-                  imagePath,
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.contain,
-                ),
-                if (isSelected)
-                  Positioned(
-                    top: 5,
-                    right: 5,
-                    child: Icon(Icons.check_circle,
-                        color: Color(0xFF001E62), size: 22),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: isSelected ? Color(0xFF001E62) : Colors.grey,
-            ),
-          ),
+          Image.asset(imagePath, width: 50, height: 50),
+          SizedBox(height: 5),
+          Text(title,
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
         ],
       ),
     );
   }
 
   Widget _serviceCard(String title, IconData icon) {
-    bool isSelected = selectedService == title;
+    bool isSelected = activeServices.contains(title);
     return GestureDetector(
       onTap: () {
         setState(() {
           selectedService = title;
         });
+        saveToFirestore();
       },
       child: Card(
         elevation: 4,
@@ -219,6 +186,9 @@ class _ServiceProvideState extends State<ServiceProvide> {
               Text(title,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(height: 10),
+              Icon(isSelected ? Icons.check_circle : Icons.cancel,
+                  color: isSelected ? Colors.green : Colors.red),
             ],
           ),
         ),

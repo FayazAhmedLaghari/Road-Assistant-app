@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app/lib/User%20Side/home_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import '../Company Side/Location_Picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../LoginOnly.dart';
 
 class UserProfile extends StatefulWidget {
@@ -136,6 +136,11 @@ class _UserProfileState extends State<UserProfile> {
         throw Exception("User is not authenticated!");
       }
 
+      // Fetch userType from SharedPreferences (if previously stored)
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? userType = prefs.getString("userType") ??
+          "User"; // Default to "User" if not found
+
       // Fetch existing user data to retain current image if no new upload
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
@@ -146,12 +151,14 @@ class _UserProfileState extends State<UserProfile> {
       String imageUrlToSave = _uploadedImageUrl ?? existingImageUrl ?? "";
 
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'uid': user.uid,
         'name': _nameController.text.trim(),
         'address': _addressController.text.trim(),
         'age': _ageController.text.trim(),
         'gender': _selectedGender,
         'contact': _contactController.text.trim(),
         'imageUrl': imageUrlToSave, // Store Cloudinary image URL
+        'userType': userType, // 🔥 Store userType in Firestore
         'createdAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
@@ -164,7 +171,7 @@ class _UserProfileState extends State<UserProfile> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => loginOnly()),
+        MaterialPageRoute(builder: (context) => HomeScreen()),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -174,32 +181,6 @@ class _UserProfileState extends State<UserProfile> {
       setState(() {
         _isSavingData = false;
       });
-    }
-  }
-
-  LatLng? selectedLocation;
-  Future<void> _pickLocation() async {
-    LatLng? location = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => LocationPicker()),
-    );
-    if (location != null) {
-      setState(() {
-        selectedLocation = location;
-      });
-
-      try {
-        List<Placemark> placemarks = await placemarkFromCoordinates(
-            location.latitude, location.longitude);
-        if (placemarks.isNotEmpty) {
-          setState(() {
-            _addressController.text =
-                "${placemarks.first.street}, ${placemarks.first.locality}";
-          });
-        }
-      } catch (e) {
-        print("Error fetching address: $e");
-      }
     }
   }
 
@@ -273,12 +254,25 @@ class _UserProfileState extends State<UserProfile> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed:
-                        _isUploadingImage ? null : _uploadImageToCloudinary,
-                    child: _isUploadingImage
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("Upload Image"),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed:
+                          _isUploadingImage ? null : _uploadImageToCloudinary,
+                      child: _isUploadingImage
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              "Upload Image",
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF001E62),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(08)),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   TextField(
@@ -289,27 +283,12 @@ class _UserProfileState extends State<UserProfile> {
                   const SizedBox(height: 15),
                   TextField(
                     controller: _addressController,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      hintText: "Enter your address",
-                      prefixIcon: Icon(Icons.home),
+                    decoration: customInputDecoration(
+                      "Enter your address",
+                      Icons.home,
                       suffixIcon: IconButton(
                         icon: Icon(Icons.location_on, color: Color(0xFF001E62)),
-                        onPressed: _pickLocation,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Color(0xFF001E62)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide:
-                            BorderSide(color: Color(0xFF001E62), width: 2),
+                        onPressed: () {},
                       ),
                     ),
                   ),

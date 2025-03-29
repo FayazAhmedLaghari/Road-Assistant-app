@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_app/lib/User%20Side/Register.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'Company Side/Tabbar.dart';
 import 'User Side/home_screen.dart';
 import 'VerificationScreen.dart';
@@ -22,6 +23,7 @@ class _LoginOnlyState extends State<loginOnly> {
   void _login() async {
     String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
+
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -31,33 +33,91 @@ class _LoginOnlyState extends State<loginOnly> {
       );
       return;
     }
+
     setState(() {
       _isLoading = true;
     });
+
     try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-          email: email, password: password);
-      // Fetch user type from Firestore
-      Future.delayed(const Duration(seconds: 2), () async {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) =>
-                  userType == "User" ? HomeScreen() : Hometab() // ✅ Correct
-              // Pass the function, not the OTP
-              ),
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      String uid = userCredential.user!.uid;
+      print("User logged in with UID: $uid");
+
+      // Check both "users" and "Company" collections
+      DocumentSnapshot userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      DocumentSnapshot companyDoc =
+          await FirebaseFirestore.instance.collection('Company').doc(uid).get();
+
+      DocumentSnapshot? foundDoc;
+      if (userDoc.exists) {
+        foundDoc = userDoc;
+      } else if (companyDoc.exists) {
+        foundDoc = companyDoc;
+      }
+
+      if (foundDoc == null) {
+        print("User document does not exist in Firestore");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("User not found in database"),
+            backgroundColor: Colors.red,
+          ),
         );
-      });
+        return;
+      }
+
+      var userData = foundDoc.data() as Map<String, dynamic>?; // Safe casting
+      if (userData == null || !userData.containsKey('userType')) {
+        print("Firestore document found, but userType is missing!");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Account error: userType field missing."),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      String userType = userData['userType'];
+      print("User type retrieved: $userType");
+
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool("User", true);
+      await prefs.setString("userType", userType);
+
+      // Navigate based on user type
+      if (userType == "User") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
+      } else if (userType == "Company") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => Hometab()),
+        );
+      } else {
+        print("Invalid userType value in Firestore: $userType");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Invalid userType in database."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } catch (e) {
+      print("Error during login: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Login Failed: ${e.toString()}"),
           backgroundColor: Colors.red,
         ),
-      );
-    } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Login failed: ${e.message}")),
       );
     } finally {
       setState(() {
@@ -124,7 +184,7 @@ class _LoginOnlyState extends State<loginOnly> {
                             _isObscure
                                 ? Icons.visibility_off
                                 : Icons.visibility,
-                            color: Color(0xFF001E62),
+                            color: Color.fromARGB(255, 25, 57, 133),
                           ),
                           onPressed: () {
                             setState(() {

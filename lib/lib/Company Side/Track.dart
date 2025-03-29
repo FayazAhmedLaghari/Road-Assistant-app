@@ -66,30 +66,39 @@ class Track extends StatelessWidget {
           SizedBox(height: 10),
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
-                .collection('selectedServices') // Fetching from Firestore
+                .collection('requests') // Fetching from Firestore
                 .orderBy('timestamp', descending: true)
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator());
               }
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return Center(child: Text("No service requests available."));
+                return const Center(
+                    child: Text("No service requests available."));
               }
 
               var serviceRequests = snapshot.data!.docs;
 
               return ListView.builder(
                 shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: serviceRequests.length,
                 itemBuilder: (context, index) {
                   var serviceData =
                       serviceRequests[index].data() as Map<String, dynamic>;
-                  var serviceType = serviceData['serviceType'] ?? 'Unknown';
-                  var serviceName = serviceData['service'] ?? 'Unknown';
-                  var timestamp = serviceData['timestamp'] as Timestamp?;
 
+                  String selectedService =
+                      serviceData['selected_service'] ?? 'Unknown Service';
+                  String selectedVehicle =
+                      serviceData['selected_vehicle'] ?? 'Unknown Vehicle';
+                  String location =
+                      serviceData['location'] ?? 'No Location Provided';
+                  String contactNo =
+                      serviceData['contact_no'] ?? 'No Contact Info';
+
+                  // Convert timestamp
+                  var timestamp = serviceData['timestamp'] as Timestamp?;
                   String formattedDate = timestamp != null
                       ? "${timestamp.toDate().toLocal()}"
                       : "Unknown time";
@@ -103,26 +112,28 @@ class Track extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            serviceType,
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text(serviceName),
-                          SizedBox(height: 10),
-                          Text(
-                            formattedDate,
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
+                          Text("Service: $selectedService",
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
+                          Text("Vehicle: $selectedVehicle"),
+                          Text("Location: $location"),
+                          Text("Contact: $contactNo"),
+                          const SizedBox(height: 10),
+                          Text("Requested At: $formattedDate",
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 10),
                           // Center(
                           //   child: ElevatedButton(
                           //     onPressed: () {
-                          //       // Handle completion action here
+                          //       // Handle completion action here (e.g., updating status)
                           //     },
                           //     style: ElevatedButton.styleFrom(
-                          //         backgroundColor: Color(0xFF001E62)),
-                          //     child: Text("Done", style: TextStyle(color: Colors.white)),
+                          //         backgroundColor: const Color(0xFF001E62)),
+                          //     child: const Text("Mark as Done",
+                          //         style: TextStyle(color: Colors.white)),
                           //   ),
-                          // )
+                          // ),
                         ],
                       ),
                     ),

@@ -111,7 +111,7 @@ class TowServiceScreen extends StatelessWidget {
           return Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text("No active service requests"));
+          return Center(child: Text("No any new rides for you"));
         }
 
         var requests = snapshot.data!.docs;
@@ -123,8 +123,8 @@ class TowServiceScreen extends StatelessWidget {
             var request = requests[index];
             return BuildRequestCard(
               requestId: request.id,
-              carNo: request['car_no'],
-              carColor: request['car_color'],
+              carNo: request['Vehicle_no'],
+              carColor: request['Vehicle_color'],
               location: request['location'],
               details: request['details'],
               contactNo: request['contact_no'],

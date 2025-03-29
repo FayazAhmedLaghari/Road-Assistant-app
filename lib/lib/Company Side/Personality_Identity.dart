@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:js';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -241,7 +240,13 @@ class _PersonalIdentityState extends State<PersonalIdentity> {
           Center(
             child: ElevatedButton(
               onPressed: _saveDataToFirestore,
-              child: Text("Submit"),
+              child: Text(
+                "Submit",
+                style: TextStyle(
+                    fontSize: 20,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600),
+              ),
               style:
                   ElevatedButton.styleFrom(backgroundColor: Color(0xFF001E62)),
             ),
