@@ -1,15 +1,84 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../home_screen.dart';
 
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
+
   @override
   _FeedbackScreenState createState() => _FeedbackScreenState();
 }
 
 class _FeedbackScreenState extends State<FeedbackScreen> {
   double _rating = 0;
+  String companyName = "Loading...";
+  String companyAddress = "Fetching location...";
+  final TextEditingController _commentController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCompanyDetails();
+  }
+
+  Future<void> _fetchCompanyDetails() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('Company')
+          .doc(user.uid)
+          .get();
+
+      if (doc.exists) {
+        setState(() {
+          companyName = doc['name'] ?? "No Name";
+          companyAddress = doc['address'] ?? "No Address";
+        });
+      }
+    } catch (e) {
+      print("Error fetching company details: $e");
+    }
+  }
+
+  Future<void> _submitFeedback() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      await FirebaseFirestore.instance.collection('Feedback').add({
+        'userId': user.uid, // Store user ID
+        'companyName': companyName,
+        'companyAddress': companyAddress,
+        'rating': _rating,
+        'comment': _commentController.text.trim(),
+        'timestamp': FieldValue.serverTimestamp(), // Store timestamp
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Feedback submitted successfully!"),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomeScreen()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error submitting feedback: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,11 +136,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             ),
             SizedBox(height: 10),
             Text(
-              "Akshar Car Reparation",
+              companyName, // Display fetched name
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            Text("H90876 abc def qiz 1234",
-                style: TextStyle(color: Colors.grey, fontSize: 12)),
+            Text(
+              companyAddress, // Display fetched address
+              style: TextStyle(color: Colors.grey, fontSize: 12),
+            ),
             SizedBox(height: 70),
             Text(
               "How is your experience?",
@@ -112,6 +183,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: TextField(
+                  controller: _commentController,
                   maxLines: 4,
                   decoration: InputDecoration(
                     hintText: "Additional Comments",
@@ -127,15 +199,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Add submit functionality here
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => HomeScreen(),
-                      ),
-                    );
-                  },
+                  onPressed: _submitFeedback,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF001E62),
                     shape: RoundedRectangleBorder(

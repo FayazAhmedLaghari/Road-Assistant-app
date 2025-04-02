@@ -1,3 +1,4 @@
+import 'package:firebase_app/lib/Company%20Side/CompanyFeedback.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -112,6 +113,12 @@ class _CompanyDrawerState extends State<CompanyDrawer> {
                     iconPath: 'assets/client_issue.png',
                     title: "Client Issue Details",
                     destination: Hometab(),
+                  ),
+                   buildMenuItem(
+                    context,
+                    iconPath: 'assets/client_issue.png',
+                    title: "Feedback",
+                    destination: CompanyFeedbackScreen(),
                   ),
                   buildMenuItem(
                     context,

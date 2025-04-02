@@ -4,7 +4,6 @@ import 'package:firebase_app/lib/User%20Side/service_card2.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 class GetServices extends StatefulWidget {
   const GetServices({super.key});
 
@@ -127,18 +126,17 @@ class _GetServicesState extends State<GetServices> {
               ),
             ),
 
-            // Fetching Service Requests
+            // Fetching Company Data from Firestore
             StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
-                  .collection('requests')
-                  .orderBy('timestamp', descending: true)
+                  .collection('Company') // Use your correct collection
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text("No service requests available."));
+                  return const Center(child: Text("No companies found nearby."));
                 }
 
                 return Column(
@@ -151,9 +149,9 @@ class _GetServicesState extends State<GetServices> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             BuildServiceCard(
-                              title: "Service Request",
-                              address: doc['location'],
-                              rating: 4.5, // Placeholder rating
+                              title: doc['name'] ?? 'Unknown Company',
+                              address: doc['address'] ?? 'No address provided',
+                              rating: 4.5, // Placeholder rating or dynamic if available
                             ),
                             const SizedBox(height: 8),
                             Center(

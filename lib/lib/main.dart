@@ -1,4 +1,5 @@
 import 'package:firebase_app/firebase_options.dart';
+import 'package:firebase_app/lib/User%20Side/Request/GetService.dart';
 import 'package:firebase_app/lib/User%20Side/UserProfile.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +40,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: Splashscreen(),
+      home: GetServices(),
     );
   }
 }
