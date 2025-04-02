@@ -1,6 +1,6 @@
+import 'package:firebase_app/lib/User%20Side/HistoryInfo.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'HistoryInfo.dart';
 
 class ServiceHistory extends StatelessWidget {
   const ServiceHistory({super.key});
@@ -76,6 +76,7 @@ class ServiceHistory extends StatelessWidget {
 
                     return buildServiceCard(
                       context,
+                      service,
                       service['selected_service'] ?? "Unknown Service",
                       service['location'] ?? "Unknown Location",
                       service['timestamp'] != null
@@ -117,7 +118,7 @@ class ServiceHistory extends StatelessWidget {
 }
 
 // Reusable Card Widget
-Widget buildServiceCard(BuildContext context, String title, String address, String time, IconData icon) {
+Widget buildServiceCard(BuildContext context, Map<String, dynamic> service, String title, String address, String time, IconData icon) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
     child: Container(
@@ -178,7 +179,9 @@ Widget buildServiceCard(BuildContext context, String title, String address, Stri
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => HistoryInformation()),
+                    MaterialPageRoute(
+                      builder: (context) => HistoryInformation(requestData: service),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
