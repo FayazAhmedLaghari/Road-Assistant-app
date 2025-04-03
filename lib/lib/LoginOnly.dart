@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_app/lib/User%20Side/Register.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Company Side/Tabbar.dart';
 import 'User Side/home_screen.dart';
@@ -48,7 +50,7 @@ class _LoginOnlyState extends State<loginOnly> {
       String uid = userCredential.user!.uid;
       print("User logged in with UID: $uid");
 
-      // Check both "users" and "Company" collections
+      // Fetch user details from Firestore
       DocumentSnapshot userDoc =
           await FirebaseFirestore.instance.collection('users').doc(uid).get();
       DocumentSnapshot companyDoc =
@@ -74,10 +76,10 @@ class _LoginOnlyState extends State<loginOnly> {
 
       var userData = foundDoc.data() as Map<String, dynamic>?; // Safe casting
       if (userData == null || !userData.containsKey('userType')) {
-        print("Firestore document found, but userType is missing!");
+        print("Firestore document found, but 'userType' field is missing!");
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Account error: userType field missing."),
+            content: Text("Account error: 'userType' field missing."),
             backgroundColor: Colors.red,
           ),
         );
@@ -91,6 +93,13 @@ class _LoginOnlyState extends State<loginOnly> {
       await prefs.setBool("User", true);
       await prefs.setString("userType", userType);
 
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Login successful."),
+          backgroundColor: Colors.green,
+        ),
+      );
+
       // Navigate based on user type
       if (userType == "User") {
         Navigator.pushReplacement(
@@ -98,15 +107,12 @@ class _LoginOnlyState extends State<loginOnly> {
           MaterialPageRoute(builder: (context) => HomeScreen()),
         );
       } else if (userType == "Company") {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => Hometab()),
-        );
+        _getCompanyLocationAndLogin(userCredential);
       } else {
-        print("Invalid userType value in Firestore: $userType");
+        print("Invalid 'userType' value in Firestore: $userType");
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Invalid userType in database."),
+            content: Text("Invalid 'userType' in database."),
             backgroundColor: Colors.red,
           ),
         );
@@ -123,6 +129,74 @@ class _LoginOnlyState extends State<loginOnly> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _getCompanyLocationAndLogin(
+      UserCredential userCredential) async {
+    bool serviceEnabled;
+    LocationPermission permission;
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Location services are disabled."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Location permission denied."),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Location permission is permanently denied."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    try {
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.low);
+      print("Company Location: ${position.latitude}, ${position.longitude}");
+      // Get address from coordinates
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(position.latitude, position.longitude);
+      Placemark place = placemarks.first;
+      // Format the addressString companyAddress
+      String companyAddress =
+          " ${place.name ?? 'Unknown Locality'},  ${place.locality ?? 'Unknown Locality'}, ${place.country ?? 'Unknown Country'}";
+      print("Company Address: $companyAddress");
+      // Navigate to HomeTab with the address
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Hometab(companyAddress: companyAddress),
+        ),
+      );
+    } catch (e) {
+      print("Error fetching location: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to retrieve location: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 

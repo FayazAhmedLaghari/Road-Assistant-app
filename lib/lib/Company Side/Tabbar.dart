@@ -1,22 +1,61 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'Personality_Identity.dart';
 import 'ServiceProvide.dart';
 import 'Track.dart';
 import 'tow_service.dart';
 
 class Hometab extends StatefulWidget {
+  final String companyAddress;
+
+  Hometab({required this.companyAddress});
+
   @override
   _HometabState createState() => _HometabState();
 }
 
 class _HometabState extends State<Hometab> {
-  int _selectedIndex = 0; // Default selected index
+  int _selectedIndex = 0;
+  String? companyAddress;
+  String? loginTime;
+  bool isAvailable = true; // Track availability state
   final List<Widget> _pages = [
     TowServiceScreen(),
     ServiceProvide(),
     Track(),
     PersonalIdentity()
   ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchCompanyLocation();
+  }
+
+  Future<void> _fetchCompanyLocation() async {
+    String uid = FirebaseAuth.instance.currentUser?.uid ?? "";
+    if (uid.isNotEmpty) {
+      DocumentSnapshot doc =
+          await FirebaseFirestore.instance.collection('Company').doc(uid).get();
+      if (doc.exists) {
+        setState(() {
+          companyAddress = doc["address"] ?? "Location not available";
+          loginTime =
+              (doc["lastLoginTime"] as Timestamp?)?.toDate().toString() ??
+                  "Time not available";
+        });
+      }
+    }
+  }
+
+  void _toggleAvailability() {
+    setState(() {
+      isAvailable = !isAvailable;
+    });
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -26,7 +65,14 @@ class _HometabState extends State<Hometab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildLocationHeader(),
+            Expanded(child: _pages[_selectedIndex]),
+          ],
+        ),
+      ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         selectedItemColor: Colors.white,
@@ -41,6 +87,88 @@ class _HometabState extends State<Hometab> {
           _buildNavItem(Icons.home_repair_service, "Service", 1),
           _buildNavItem(Icons.directions_car, "Track", 2),
           _buildNavItem(Icons.person, "Profile", 3),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationHeader() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      margin: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 6,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.location_on,
+                  color: isAvailable ? Color(0xFF001E62) : Colors.grey),
+              SizedBox(width: 6),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isAvailable
+                        ? (widget.companyAddress ?? "Fetching location...")
+                        : "Unavailable",
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: isAvailable ? Colors.black : Colors.grey),
+                  ),
+                  SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.access_time,
+                          size: 14,
+                          color: isAvailable ? Colors.grey : Colors.grey[400]),
+                      SizedBox(width: 4),
+                      Text(
+                        isAvailable
+                            ? (loginTime ?? "09:00 AM - 5:00 PM")
+                            : "Unavailable",
+                        style: TextStyle(
+                            fontSize: 12,
+                            color:
+                                isAvailable ? Colors.grey : Colors.grey[400]),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          SizedBox(
+            width: 3,
+          ),
+          Expanded(
+            child: InkWell(
+              onTap: _toggleAvailability,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isAvailable ? Color(0xFF001E62) : Colors.red,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  isAvailable ? "Available" : "Unavailable",
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -81,37 +209,4 @@ class _HometabState extends State<Hometab> {
       label: '',
     );
   }
-}
-
-Widget _buildServiceCategory(String title, IconData icon) {
-  return Column(
-    children: [
-      Icon(icon, size: 40, color: Color(0xFF001E62)),
-      SizedBox(height: 5),
-      Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500))
-    ],
-  );
-}
-
-Widget _buildServiceTile(String title, IconData icon, bool selected) {
-  return Container(
-    decoration: BoxDecoration(
-      color: selected ? Color(0xFF001E62) : Colors.white,
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: Color(0xFF001E62), width: 1),
-    ),
-    padding: EdgeInsets.all(10),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon,
-            size: 40, color: selected ? Colors.white : Color(0xFF001E62)),
-        SizedBox(height: 5),
-        Text(title,
-            style: TextStyle(
-                color: selected ? Colors.white : Color(0xFF001E62),
-                fontWeight: FontWeight.bold))
-      ],
-    ),
-  );
 }

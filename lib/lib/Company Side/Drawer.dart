@@ -1,6 +1,9 @@
+import 'package:firebase_app/lib/Company%20Side/Location_Picker.dart';
+import 'package:firebase_app/lib/Company%20Side/issue_details.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'CompanyFeedbackScreen.dart';
 import 'CompanyNotification.dart';
 import '../User Side/Register.dart';
 import 'ServiceProvide.dart';
@@ -19,7 +22,6 @@ class _CompanyDrawerState extends State<CompanyDrawer> {
   String companyName = "Loading...";
   String companyEmail = "Loading...";
   String profileImage = ""; // Default is empty, fallback to placeholder
-
   @override
   void initState() {
     super.initState();
@@ -99,7 +101,9 @@ class _CompanyDrawerState extends State<CompanyDrawer> {
                     context,
                     iconPath: 'assets/dashboard.png',
                     title: "Dashboard",
-                    destination: CompanyNotificationsScreen(),
+                    destination: Hometab(
+                      companyAddress: '',
+                    ),
                   ),
                   buildMenuItem(
                     context,
@@ -111,13 +115,13 @@ class _CompanyDrawerState extends State<CompanyDrawer> {
                     context,
                     iconPath: 'assets/client_issue.png',
                     title: "Client Issue Details",
-                    destination: Hometab(),
+                    destination: IssueDetails(),
                   ),
                   buildMenuItem(
                     context,
                     iconPath: 'assets/manage_loc.png',
                     title: "Manage Locations",
-                    destination: Hometab(),
+                    destination: LocationPicker(),
                   ),
                   buildMenuItem(
                     context,
@@ -135,7 +139,15 @@ class _CompanyDrawerState extends State<CompanyDrawer> {
                     context,
                     iconPath: 'assets/account_set.png',
                     title: "Account Settings",
-                    destination: Hometab(),
+                    destination: Hometab(
+                      companyAddress: '',
+                    ),
+                  ),
+                  buildMenuItem(
+                    context,
+                    iconPath: 'assets/client_issue.png',
+                    title: "Feedback",
+                    destination: CompanyFeedbackScreen(),
                   ),
                   buildMenuItem(
                     context,

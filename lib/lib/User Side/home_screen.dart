@@ -2,7 +2,6 @@ import 'package:firebase_app/lib/User%20Side/service_card.dart';
 import 'package:firebase_app/lib/User%20Side/service_card2.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'Notification.dart';
 import 'Request/GetService.dart';
 import 'Request/RequestService.dart';
@@ -174,20 +173,24 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
+            // StreamBuilder for Company Profiles
             StreamBuilder(
               stream: FirebaseFirestore.instance
-                  .collection('requests')
-                  .orderBy('timestamp', descending: true)
+                  .collection('Company') // Fetching company profiles
                   .snapshots(),
               builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(child: Text("No service requests available."));
+                  return Center(child: Text("No company profiles available."));
                 }
                 return Column(
                   children: snapshot.data!.docs.map((doc) {
+                    // Fetch company name and location
+                    String companyName = doc['name'] ?? 'No name available';
+                    String companyLocation =
+                        doc['address'] ?? 'No location available';
                     return Card(
                       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: Padding(
@@ -196,9 +199,11 @@ class HomeScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             BuildServiceCard(
-                              title: "Service Request",
-                              address: doc['location'],
-                              rating: 4.5,
+                              title: companyName, // Display company name
+                              address:
+                                  companyLocation, // Display company location
+                              rating:
+                                  4.5, // Assuming a rating, you can replace with actual data if available
                             ),
                             SizedBox(height: 8),
                           ],

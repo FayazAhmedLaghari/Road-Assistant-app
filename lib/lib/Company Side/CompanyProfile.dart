@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import '../LoginOnly.dart';
 import 'Tabbar.dart';
 
 class CompanyProfile extends StatefulWidget {
@@ -149,7 +150,7 @@ class _UserProfileState extends State<CompanyProfile> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => Hometab()),
+        MaterialPageRoute(builder: (context) => loginOnly()),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

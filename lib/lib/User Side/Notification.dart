@@ -1,5 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:math';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -10,22 +12,59 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   List<Map<String, String>> notifications = [];
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
   @override
   void initState() {
     super.initState();
+    _setupLocalNotifications();
     _setupFirebaseMessaging();
+  }
+
+  void _setupLocalNotifications() {
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    final InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+
+    flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  void _showLocalNotification(String title, String body) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'high_importance_channel', // Must match with the FCM channel_id if used
+      'High Importance Notifications',
+
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+    );
+
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.show(
+      1, // Notification ID
+      title,
+      body,
+      platformChannelSpecifics,
+    );
   }
 
   void _setupFirebaseMessaging() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-    // Request permission for notifications
+    // Request permission
     NotificationSettings settings = await messaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
+
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       print('User granted permission');
     } else {
@@ -34,7 +73,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     // Get FCM token
     String? token = await messaging.getToken();
-    print("FCM Token: $token"); // Store/send this token to your backend
+    print("FCM Token: $token");
 
     // Handle foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -48,6 +87,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             'time': "Just now"
           });
         });
+
+        // Show a local notification
+        _showLocalNotification(
+          message.notification!.title ?? "New Notification",
+          message.notification!.body ?? "",
+        );
       }
     });
 

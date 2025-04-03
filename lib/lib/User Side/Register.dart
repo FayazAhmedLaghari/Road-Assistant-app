@@ -302,7 +302,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const loginOnly(),
+                                  builder: (context) => loginOnly(),
                                 ),
                               );
                             },

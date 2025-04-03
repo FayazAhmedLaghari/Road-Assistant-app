@@ -35,7 +35,7 @@ class _CompanyverficationState extends State<Companyverfication> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const loginOnly(),
+                        builder: (context) => loginOnly(),
                       ),
                     );
                   },
