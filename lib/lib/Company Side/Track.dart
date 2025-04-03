@@ -3,7 +3,6 @@ import 'package:firebase_app/lib/Company%20Side/Drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 class Track extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -133,8 +132,7 @@ Widget _buildServiceRequestList() {
     ),
   );
 }
-
-  Widget _buildServiceHistory() {
+Widget _buildServiceHistory() {
   return Padding(
     padding: const EdgeInsets.all(16.0),
     child: Column(
@@ -148,7 +146,7 @@ Widget _buildServiceRequestList() {
         StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('Company')
-              .doc("2PEn04QtiMXkNk1h6Qe3Vk4fE2") // Use your actual company ID
+              .doc("YOUR_COMPANY_ID") // Replace with your actual company ID
               .collection('accepted_services') // Fetch accepted services
               .orderBy('timestamp', descending: true) // Sort by newest
               .snapshots(),
@@ -168,12 +166,11 @@ Widget _buildServiceRequestList() {
               itemCount: services.length,
               itemBuilder: (context, index) {
                 var service = services[index].data() as Map<String, dynamic>;
-                var customerName = service['customer_name'] ?? 'Unknown';
-                var vehicleType = service['vehicle_type'] ?? 'Unknown';
-                var vehicleBrand = service['vehicle_brand'] ?? 'Unknown';
-                var vehicleModel = service['vehicle_model'] ?? 'Unknown';
-                var fuelType = service['fuel_type'] ?? 'Unknown';
-                var plateNumber = service['plate_number'] ?? 'Unknown';
+                var carNo = service['car_no'] ?? 'Unknown';
+                var selectedVehicle = service['selected_vehicle'] ?? 'Unknown';
+                var vehicleColor = service['Vehicle_color'] ?? 'Unknown';
+                var selectedService = service['selected_service'] ?? 'Unknown';
+                var vehicleNo = service['Vehicle_no'] ?? 'Unknown';
                 var timestamp = service['timestamp'] as Timestamp?;
 
                 String formattedDate = timestamp != null
@@ -182,19 +179,18 @@ Widget _buildServiceRequestList() {
 
                 return Card(
                   elevation: 2,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          customerName,
+                          carNo,
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          "$vehicleType | $vehicleBrand | $vehicleModel | $fuelType | $plateNumber",
+                          "$selectedVehicle | $vehicleColor | $selectedService | $vehicleNo",
                         ),
                         SizedBox(height: 10),
                         Text(
