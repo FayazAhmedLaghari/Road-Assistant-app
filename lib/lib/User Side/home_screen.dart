@@ -1,9 +1,7 @@
-import 'package:firebase_app/lib/User%20Side/service_card.dart';
 import 'package:firebase_app/lib/User%20Side/service_card2.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'Notification.dart';
-import 'Request/GetService.dart';
 import 'Request/RequestService.dart';
 import 'side_drawer.dart';
 
@@ -187,10 +185,20 @@ class HomeScreen extends StatelessWidget {
                 }
                 return Column(
                   children: snapshot.data!.docs.map((doc) {
-                    // Fetch company name and location
-                    String companyName = doc['name'] ?? 'No name available';
-                    String companyLocation =
-                        doc['address'] ?? 'No location available';
+                    // Print the document data for debugging
+                    print("Firestore Document: ${doc.data()}");
+
+                    // Fetch company name and location safely
+                    Map<String, dynamic> data =
+                        doc.data() as Map<String, dynamic>;
+
+                    String companyName = data.containsKey('name')
+                        ? data['name']
+                        : 'No name available';
+                    String companyLocation = data.containsKey('address')
+                        ? data['address']
+                        : 'No location available';
+
                     return Card(
                       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: Padding(

@@ -6,7 +6,6 @@ import '../home_screen.dart';
 
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
-
   @override
   _FeedbackScreenState createState() => _FeedbackScreenState();
 }
@@ -26,13 +25,11 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   Future<void> _fetchCompanyDetails() async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
-
     try {
       DocumentSnapshot doc = await FirebaseFirestore.instance
           .collection('Company')
           .doc(user.uid)
           .get();
-
       if (doc.exists) {
         setState(() {
           companyName = doc['name'] ?? "No Name";
@@ -57,14 +54,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         'comment': _commentController.text.trim(),
         'timestamp': FieldValue.serverTimestamp(), // Store timestamp
       });
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Feedback submitted successfully!"),
           backgroundColor: Colors.green,
         ),
       );
-
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => HomeScreen()),

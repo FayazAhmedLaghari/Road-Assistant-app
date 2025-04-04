@@ -132,12 +132,12 @@ class TowServiceScreen extends StatelessWidget {
               selected_vehicle: data.containsKey('selected_vehicle')
                   ? data['selected_vehicle']
                   : 'No Vehicle',
-              car_color: data.containsKey('car_color')
-                  ? data['car_color']
-                  : 'No Color',
               selected_service: data.containsKey('selected_service')
                   ? data['selected_service']
                   : 'No service',
+              car_color: data.containsKey('car_color')
+                  ? data['car_color']
+                  : 'No Color',
               car_no: data.containsKey('car_no')
                   ? data['car_no']
                   : 'No Vehicle Number',
