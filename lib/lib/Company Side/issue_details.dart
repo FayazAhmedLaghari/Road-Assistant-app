@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-
 import 'client_issue_details.dart';
 
 class IssueDetails extends StatelessWidget {
-  const IssueDetails({super.key});
+  final Map<String, dynamic> requestData;
+
+  const IssueDetails({super.key, required this.requestData});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +35,7 @@ class IssueDetails extends StatelessWidget {
                         IconButton(
                           icon: const Icon(Icons.arrow_back),
                           onPressed: () {
-                            Navigator.pop(context); // Fixed back navigation
+                            Navigator.pop(context);
                           },
                         ),
                         const Text(
@@ -60,11 +61,10 @@ class IssueDetails extends StatelessWidget {
             _buildCard(
               title: "Vehicle Details",
               children: [
-                _buildDetailRow("Vehicle Owner", "Mr. Weslewski"),
-                _buildDetailRow("Vehicle Type", "Car"),
-                _buildDetailRow("Vehicle Name", "Toyota"),
-                _buildDetailRow(
-                    "Vehicle Color", "Blue"), // Fixed incorrect value
+                _buildDetailRow("Vehicle Owner", requestData['owner'] ?? 'N/A'),
+                _buildDetailRow("Vehicle Type", requestData['selected_vehicle'] ?? 'N/A'),
+                _buildDetailRow("Vehicle No", requestData['car_no'] ?? 'N/A'),
+                _buildDetailRow("Vehicle Color", requestData['car_color'] ?? 'N/A'),
               ],
             ),
 
@@ -74,42 +74,22 @@ class IssueDetails extends StatelessWidget {
             _buildCard(
               title: "Client Service Request",
               children: [
-                _buildDetailRow("Client Issue Type", "Flat Tyre"),
-                _buildDetailRow("Client Location", "Locate Client",
-                    isLink: true),
-                _buildDetailRow("Client Contact", "02...."),
+                _buildDetailRow("Client Issue Type", requestData['selected_service'] ?? 'N/A'),
+                _buildDetailRow("Client Location", requestData['location'] ?? 'N/A', isLink: true),
+                _buildDetailRow("Client Contact", requestData['contact_no'] ?? 'N/A'),
               ],
             ),
 
             const SizedBox(height: 16),
-
             // Client Added Text Card
-            _buildCard(
+_buildCard(
               title: "Client Added Text",
               children: [
-                const Text(
-                  "Description :",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.black,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text(
-                    "A car service is a routine check-up and maintenance process to ensure it's safe "
-                    "and running smoothly. It involves a qualified mechanic inspecting the car, "
-                    "checking its systems, and making adjustments or replacements as needed.",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.black,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
+                _buildDetailColumn("Details", requestData['details'] ?? 'N/A'),
+
               ],
             ),
+
 
             // Buttons Section
             Padding(
@@ -117,8 +97,8 @@ class IssueDetails extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildButton(context, "Decline"),
-                  _buildButton(context, "Accept"),
+                  _buildButton(context, "Message"),
+                  _buildButton(context, "Call Now"),
                 ],
               ),
             ),
@@ -128,31 +108,32 @@ class IssueDetails extends StatelessWidget {
     );
   }
 
-  // Card Builder
+  // Reusable Card
   Widget _buildCard({required String title, required List<Widget> children}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(title,
-              style:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
           child: Card(
             color: Colors.white,
             elevation: 3,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8)),
             child: Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 8),
-                  ...children, // Expands the list of children inside the card
+                  ...children,
                 ],
               ),
             ),
@@ -162,31 +143,55 @@ class IssueDetails extends StatelessWidget {
     );
   }
 
-  // Detail Row Builder
+  // Reusable Row for Label + Value
   Widget _buildDetailRow(String label, String value, {bool isLink = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black)),
-          const Text(":",
-              style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
+          const Text(":", style: TextStyle(fontWeight: FontWeight.bold)),
           Text(
             value,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: isLink ? const Color(0xFF001E62) : Colors.grey,
-              decoration:
-                  isLink ? TextDecoration.underline : TextDecoration.none,
+              decoration: isLink ? TextDecoration.underline : TextDecoration.none,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+ Widget _buildDetailColumn(String label, String value, {bool isLink = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: isLink ? const Color(0xFF001E62) : Colors.grey,
+              decoration: isLink ? TextDecoration.underline : TextDecoration.none,
             ),
           ),
         ],
@@ -194,14 +199,10 @@ class IssueDetails extends StatelessWidget {
     );
   }
 
-  // Button Builder (Fixed)
+  // Button
   Widget _buildButton(BuildContext context, String text) {
     return ElevatedButton(
       onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ClientIssueDetails()),
-        );
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFF001E62),
@@ -209,9 +210,14 @@ class IssueDetails extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         minimumSize: const Size(140, 45),
       ),
-      child: Text(text,
-          style: const TextStyle(
-              fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+          color: Colors.white,
+        ),
+      ),
     );
   }
 }

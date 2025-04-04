@@ -1,5 +1,7 @@
 import 'package:firebase_app/lib/Company%20Side/CompanyNotification.dart';
 import 'package:firebase_app/lib/Company%20Side/Drawer.dart';
+import 'package:firebase_app/lib/Company%20Side/client_issue_details.dart';
+import 'package:firebase_app/lib/Company%20Side/issue_details.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -82,56 +84,77 @@ class _TrackState extends State<Track> with SingleTickerProviderStateMixin {
     );
   }
 
-  Widget _buildServiceRequestList() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('selectedServices')
-            .orderBy('timestamp', descending: true)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text("No service requests available."));
-          }
-
-          var serviceRequests = snapshot.data!.docs;
-
-          return ListView.builder(
-            itemCount: serviceRequests.length,
-            itemBuilder: (context, index) {
-              var serviceData = serviceRequests[index].data() as Map<String, dynamic>;
-              var serviceType = serviceData['serviceType'] ?? 'Unknown';
-              var serviceName = serviceData['service'] ?? 'Unknown';
-              var timestamp = serviceData['timestamp'] as Timestamp?;
-              String formattedDate = timestamp != null ? "${timestamp.toDate().toLocal()}" : "Unknown time";
-
-              return Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(serviceType, style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text(serviceName),
-                      SizedBox(height: 10),
-                      Text(formattedDate, style: TextStyle(fontWeight: FontWeight.bold)),
-                    ],
-                  ),
+Widget _buildServiceRequestList() {
+  return Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('requests') // Updated to match RequestConfirmation
+          .orderBy('timestamp', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(child: Text("No service requests available."));
+        }
+        var serviceRequests = snapshot.data!.docs;
+        return ListView.builder(
+          itemCount: serviceRequests.length,
+          itemBuilder: (context, index) {
+            var serviceData = serviceRequests[index].data() as Map<String, dynamic>;
+            var car_no = serviceData['car_no'] ?? 'Unknown';
+            var car_color = serviceData['car_color'] ?? 'Unknown';
+            var selected_service = serviceData['selected_service'] ?? 'Unknown';
+            var selected_vehicle = serviceData['selected_vehicle'] ?? 'Unknown';
+            var location = serviceData['location'] ?? 'Unknown';
+            var timestamp = serviceData['timestamp'] as Timestamp?;
+            String formattedDate = timestamp != null ? "${timestamp.toDate().toLocal()}" : "Unknown time";
+            return Card(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 6,
+      margin: EdgeInsets.symmetric(vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("$car_no", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            SizedBox(height: 4),
+            Text("$selected_vehicle | $car_color | $selected_service | $car_no", style: TextStyle(color: Colors.grey[700])),
+            SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: (){},
+                  style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF001E62)),
+                  child: Text("Done", style: TextStyle(color: Colors.white)),
                 ),
-              );
-            },
-          );
-        },
+                 ElevatedButton(
+                  onPressed: () {
+                   Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => IssueDetails(requestData: serviceData)),
+        );
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF001E62)),
+                  child: Text("Locate Client", style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
-  }
-
+          },
+        );
+      },
+    ),
+  );
+}
   Widget _buildServiceHistory() {
     return Padding(
       padding: const EdgeInsets.all(16.0),

@@ -183,16 +183,24 @@ class BuildRequestCard extends StatelessWidget {
                   style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF001E62)),
                   child: Text("Decline", style: TextStyle(color: Colors.white)),
                 ),
-                 ElevatedButton(
-                  onPressed: () {
-                   Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ClientIssueDetails()),
-        );
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF001E62)),
-                  child: Text("View", style: TextStyle(color: Colors.white)),
-                ),
+             ElevatedButton(
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ClientIssueDetails(
+          carNo: carNo,
+          selectedVehicle: selected_vehicle,
+          carColor: car_color,
+          selectedService: selected_service,
+        ),
+      ),
+    );
+  },
+  style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF001E62)),
+  child: Text("View", style: TextStyle(color: Colors.white)),
+),
+
               ],
             ),
           ],

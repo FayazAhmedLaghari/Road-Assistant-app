@@ -185,12 +185,12 @@ class _PersonalIdentityState extends State<PersonalIdentity> {
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const IssueDetails(),
-                        ),
-                      );
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) => const IssueDetails(),
+                      //   ),
+                      // );
                     },
                     child: const Icon(
                       Icons.arrow_forward_ios,
