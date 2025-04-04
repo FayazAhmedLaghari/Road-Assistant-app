@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
 
 class ClientIssueDetails extends StatelessWidget {
-  final String carNo;
-  final String selectedVehicle;
-  final String carColor;
-  final String selectedService;
+  final Map<String, dynamic> requestData;
 
   const ClientIssueDetails({
     Key? key,
-    required this.carNo,
-    required this.selectedVehicle,
-    required this.carColor,
-    required this.selectedService,
+    required this.requestData,
   }) : super(key: key);
 
   @override
@@ -22,9 +16,10 @@ class ClientIssueDetails extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Top bar
             Container(
               height: 120,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -33,49 +28,76 @@ class ClientIssueDetails extends StatelessWidget {
               ),
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
-                child: Stack(alignment: Alignment.center, children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Builder(
-                        builder: (context) => IconButton(
-                          icon: Icon(Icons.arrow_back),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back),
                           onPressed: () => Navigator.pop(context),
                         ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.notifications),
-                        onPressed: () => Scaffold.of(context).openDrawer(),
-                      ),
-                    ],
-                  ),
-                  Positioned(
-                    top: 58,
-                    child: Text(
-                      "Client Issue Details",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
+                        IconButton(
+                          icon: const Icon(Icons.notifications),
+                          onPressed: () {},
+                        ),
+                      ],
+                    ),
+                    const Positioned(
+                      top: 58,
+                      child: Text(
+                        "Client Issue Details",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
-                  ),
-                ]),
+                  ],
+                ),
               ),
             ),
+
+            // Vehicle Details
             _buildCard(
               title: "Vehicle Details",
               children: [
-                _buildDetailRow("Vehicle No", carNo),
-                _buildDetailRow("Vehicle Type", selectedVehicle),
-                _buildDetailRow("Vehicle Color", carColor),
+                _buildDetailRow("Owner Name", requestData['owner'] ?? 'N/A'),
+                _buildDetailRow("Vehicle No", requestData['car_no'] ?? 'N/A'),
+                _buildDetailRow("Vehicle Type", requestData['selected_vehicle'] ?? 'N/A'),
+                _buildDetailRow("Vehicle Color", requestData['car_color'] ?? 'N/A'),
               ],
             ),
+
+            // Service Details
             _buildCard(
               title: "Service Requested",
               children: [
-                _buildDetailRow("Service Type", selectedService),
+                _buildDetailRow("Service Type", requestData['selected_service'] ?? 'N/A'),
+                _buildDetailRow("Location", requestData['location'] ?? 'N/A'),
+                _buildDetailRow("Client Contact", requestData['contact_no'] ?? 'N/A'),
               ],
+            ),
+
+            // Extra Notes / Details
+            _buildCard(
+              title: "Additional Notes",
+              children: [
+                _buildDetailColumn("Details", requestData['details'] ?? 'N/A'),
+              ],
+            ),
+              // Buttons Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildButton(context, "Message"),
+                  _buildButton(context, "Call Now"),
+                ],
+              ),
             ),
           ],
         ),
@@ -88,15 +110,18 @@ class ClientIssueDetails extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Text(title,
+              style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.w600)),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
           child: Card(
             color: Colors.white,
             elevation: 3,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             child: Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
@@ -116,11 +141,66 @@ class ClientIssueDetails extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black)),
-          Text(":"),
-          Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.grey)),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black)),
+          const Text(":"),
+          Flexible(
+            child: Text(value,
+                textAlign: TextAlign.end,
+                style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailColumn(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black)),
+          const SizedBox(height: 4),
+          Text(value,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey)),
         ],
       ),
     );
   }
 }
+Widget _buildButton(BuildContext context, String text) {
+    return ElevatedButton(
+      onPressed: () {
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF001E62),
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        minimumSize: const Size(140, 45),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+

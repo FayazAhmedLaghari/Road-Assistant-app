@@ -97,8 +97,8 @@ _buildCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildButton(context, "Message"),
-                  _buildButton(context, "Call Now"),
+                  _buildButton(context, "Accept"),
+                  _buildButton(context, "Decline"),
                 ],
               ),
             ),
