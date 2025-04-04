@@ -118,10 +118,8 @@ class TowServiceScreen extends StatelessWidget {
           itemBuilder: (context, index) {
             var request = requests[index];
             var data = request.data() as Map<String, dynamic>;
-
             // Debugging: Print document data
             print("Document Data: $data");
-
             return BuildRequestCard(
               requestId: request.id,
               carNo: data.containsKey('car_no') ? data['car_no'] : 'Unknown',
