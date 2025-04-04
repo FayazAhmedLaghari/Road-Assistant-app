@@ -1,7 +1,10 @@
+import 'package:firebase_app/lib/Company%20Side/client_issue_details.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'Drawer.dart';
 import 'CompanyNotification.dart';
+import 'issue_details.dart';
+
 class TowServiceScreen extends StatelessWidget {
   const TowServiceScreen({super.key});
 
@@ -27,9 +30,6 @@ class TowServiceScreen extends StatelessWidget {
                   children: [
                     _buildRequestList(),
                     SizedBox(height: 20),
-                    // Text("Done Service",
-                    //     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    // _buildDoneServiceList(),
                   ],
                 ),
               ),
@@ -114,46 +114,56 @@ class TowServiceScreen extends StatelessWidget {
         }
 
         var requests = snapshot.data!.docs;
+
         return ListView.builder(
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
           itemCount: requests.length,
           itemBuilder: (context, index) {
             var request = requests[index];
+            var data = request.data() as Map<String, dynamic>;
+
+            // Debugging: Print document data
+            print("Document Data: $data");
+
             return BuildRequestCard(
               requestId: request.id,
-              carNo: request['Vehicle_no'],
-              carColor: request['Vehicle_color'],
-              location: request['location'],
-              details: request['details'],
-              contactNo: request['contact_no'],
+              carNo: data.containsKey('car_no') ? data['car_no'] : 'Unknown',
+              selected_vehicle: data.containsKey('selected_vehicle')
+                  ? data['selected_vehicle']
+                  : 'No Vehicle',
+              car_color: data.containsKey('car_color')
+                  ? data['car_color']
+                  : 'No Color',
+              selected_service: data.containsKey('selected_service')
+                  ? data['selected_service']
+                  : 'No service',
+              car_no: data.containsKey('car_no')
+                  ? data['car_no']
+                  : 'No Vehicle Number',
             );
           },
         );
       },
     );
   }
-
-  Widget _buildDoneServiceList() {
-    return Container(); // Implement logic for completed services if needed
-  }
 }
 
 class BuildRequestCard extends StatelessWidget {
   final String requestId;
   final String carNo;
-  final String carColor;
-  final String location;
-  final String details;
-  final String contactNo;
+  final String selected_vehicle;
+  final String car_color;
+  final String selected_service;
+  final String car_no;
 
   const BuildRequestCard({
     required this.requestId,
     required this.carNo,
-    required this.carColor,
-    required this.location,
-    required this.details,
-    required this.contactNo,
+    required this.selected_vehicle,
+    required this.car_color,
+    required this.selected_service,
+    required this.car_no,
     Key? key,
   }) : super(key: key);
 
@@ -172,24 +182,35 @@ class BuildRequestCard extends StatelessWidget {
             Text("$carNo",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             SizedBox(height: 4),
-            Text("$carColor | $location | $details | $contactNo",
+            Text("$selected_vehicle | $car_color | $selected_service | $car_no",
                 style: TextStyle(color: Colors.grey[700])),
             SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: () =>
-                      _updateRequestStatus(context, requestId, "accepted"),
+                  onPressed: () => _acceptRequest(context),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF001E62)),
                   child: Text("Accept", style: TextStyle(color: Colors.white)),
                 ),
                 ElevatedButton(
-                  onPressed: () => _deleteRequest(context, requestId),
+                  onPressed: () => _deleteRequest(context),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF001E62)),
                   child: Text("Decline", style: TextStyle(color: Colors.white)),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const IssueDetails()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF001E62)),
+                  child: Text("View", style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
@@ -199,22 +220,56 @@ class BuildRequestCard extends StatelessWidget {
     );
   }
 
-  void _updateRequestStatus(
-      BuildContext context, String requestId, String status) async {
-    await FirebaseFirestore.instance
+  void _acceptRequest(BuildContext context) async {
+    // Fetch the request details from Firestore
+    var requestDoc = await FirebaseFirestore.instance
         .collection('requests')
         .doc(requestId)
-        .update({'status': status});
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("Request marked as $status")));
+        .get();
+    if (requestDoc.exists) {
+      var data = requestDoc.data() as Map<String, dynamic>;
+
+      // Add to the accepted_services collection
+      await FirebaseFirestore.instance
+          .collection('Company')
+          .doc("YOUR_COMPANY_ID") // Replace with your company ID
+          .collection('accepted_services')
+          .add({
+        'car_no': data['car_no'],
+        'selected_vehicle': data['selected_vehicle'],
+        'car_color': data['Vehicle_color'],
+        'selected_service': data['selected_service'],
+        'car_no': data['Vehicle_no'],
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      // Update the request status to 'accepted'
+      await FirebaseFirestore.instance
+          .collection('requests')
+          .doc(requestId)
+          .update({'status': 'accepted'});
+
+      // Delete the request from the current list
+      await FirebaseFirestore.instance
+          .collection('requests')
+          .doc(requestId)
+          .delete();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text("Request accepted and moved to service history")),
+      );
+    }
   }
 
-  void _deleteRequest(BuildContext context, String requestId) async {
+  void _deleteRequest(BuildContext context) async {
+    // Delete the request without accepting it
     await FirebaseFirestore.instance
         .collection('requests')
         .doc(requestId)
         .delete();
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("Request removed")));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Request removed")),
+    );
   }
 }

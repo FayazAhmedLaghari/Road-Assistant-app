@@ -74,8 +74,8 @@ class _RequestConfirmationState extends State<RequestConfirmation> {
 
       await FirebaseFirestore.instance.collection('requests').add({
         'user_id': userId, // ✅ Include user ID
-        'Vehicle_no': carNoController.text,
-        'Vehicle_color': carColorController.text,
+        'car_no': carNoController.text,
+        'car_color': carColorController.text,
         'location': locationController.text,
         'details': detailsController.text,
         'contact_no': contactNoController.text,

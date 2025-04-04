@@ -10,8 +10,7 @@ class IssueDetails extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: StreamBuilder<QuerySnapshot>(
-        stream:
-            FirebaseFirestore.instance.collection('client_issues').snapshots(),
+        stream: FirebaseFirestore.instance.collection('requests').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -19,7 +18,6 @@ class IssueDetails extends StatelessWidget {
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(child: Text("No client issues found."));
           }
-
           var issueData = snapshot.data!.docs.first;
           return SingleChildScrollView(
             child: Column(
@@ -29,24 +27,21 @@ class IssueDetails extends StatelessWidget {
                 _buildCard(
                   title: "Vehicle Details",
                   children: [
+                    _buildDetailRow("Vehicle Owner", issueData['car_no']),
                     _buildDetailRow(
-                        "Vehicle Owner", issueData['vehicle_owner']),
-                    _buildDetailRow("Vehicle Type", issueData['vehicle_type']),
-                    _buildDetailRow("Vehicle Name", issueData['vehicle_name']),
+                        "Vehicle Type", issueData['selected_service']),
                     _buildDetailRow(
-                        "Vehicle Color", issueData['vehicle_color']),
+                        "Vehicle Name", issueData['selected_vehicle']),
+                    _buildDetailRow("Vehicle Color", issueData['car_color']),
                   ],
                 ),
                 _buildCard(
                   title: "Client Service Request",
                   children: [
-                    _buildDetailRow(
-                        "Client Issue Type", issueData['client_issue_type']),
-                    _buildDetailRow(
-                        "Client Location", issueData['client_location'],
+                    _buildDetailRow("Client Issue Type", issueData['details']),
+                    _buildDetailRow("Client Location", issueData['location'],
                         isLink: true),
-                    _buildDetailRow(
-                        "Client Contact", issueData['client_contact']),
+                    _buildDetailRow("Client Contact", issueData['contact_no']),
                   ],
                 ),
                 _buildCard(
@@ -60,7 +55,7 @@ class IssueDetails extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
-                        issueData['description'] ?? "No description provided.",
+                        issueData['details'] ?? "No description provided.",
                         style: const TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w500),
                       ),

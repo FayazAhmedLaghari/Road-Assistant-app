@@ -104,9 +104,9 @@ class _HistoryInformationState extends State<HistoryInformation> {
                   buildInfo("Service",
                       widget.requestData['selected_service'] ?? "N/A"),
                   buildInfo(
-                      "Vehicle No", widget.requestData['Vehicle_no'] ?? "N/A"),
+                      "Vehicle No", widget.requestData['car_no'] ?? "N/A"),
                   buildInfo("Vehicle Color",
-                      widget.requestData['Vehicle_color'] ?? "N/A"),
+                      widget.requestData['car_color'] ?? "N/A"),
                   buildInfo(
                       "Location", widget.requestData['location'] ?? "N/A"),
                   buildInfo(
