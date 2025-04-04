@@ -1,3 +1,4 @@
+import 'package:firebase_app/lib/Company%20Side/Drawer.dart';
 import 'package:flutter/material.dart';
 
 class CompanyNotificationsScreen extends StatelessWidget {
@@ -6,6 +7,7 @@ class CompanyNotificationsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      drawer: CompanyDrawer(),
       body: Column(
         children: [
           // Gradient Header
@@ -30,10 +32,6 @@ class CompanyNotificationsScreen extends StatelessWidget {
                 ),
               ),
               centerTitle: true,
-              leading: IconButton(
-                icon: const Icon(Icons.menu, color: Colors.black),
-                onPressed: () {},
-              ),
               actions: const [
                 CircleAvatar(
                   backgroundImage: AssetImage('assets/profile_placeholder.jpg'),

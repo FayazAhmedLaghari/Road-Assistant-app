@@ -35,7 +35,8 @@ class ClientIssueDetails extends StatelessWidget {
                       ),
                       IconButton(
                         icon: Icon(Icons.notifications),
-                        onPressed: () {},
+              onPressed: () => Scaffold.of(context).openDrawer(),
+                        
                       ),
                     ],
                   ),
