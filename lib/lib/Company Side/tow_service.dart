@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'Drawer.dart';
 import 'CompanyNotification.dart';
-import 'issue_details.dart';
 
 class TowServiceScreen extends StatelessWidget {
   const TowServiceScreen({super.key});
@@ -122,22 +121,20 @@ class TowServiceScreen extends StatelessWidget {
           itemBuilder: (context, index) {
             var request = requests[index];
             var data = request.data() as Map<String, dynamic>;
-
             // Debugging: Print document data
             print("Document Data: $data");
-
             return BuildRequestCard(
               requestId: request.id,
               carNo: data.containsKey('car_no') ? data['car_no'] : 'Unknown',
               selected_vehicle: data.containsKey('selected_vehicle')
                   ? data['selected_vehicle']
                   : 'No Vehicle',
-              selected_service: data.containsKey('selected_service')
-                  ? data['selected_service']
-                  : 'No service',
               car_color: data.containsKey('car_color')
                   ? data['car_color']
                   : 'No Color',
+              selected_service: data.containsKey('selected_service')
+                  ? data['selected_service']
+                  : 'No service',
               car_no: data.containsKey('car_no')
                   ? data['car_no']
                   : 'No Vehicle Number',
@@ -201,12 +198,27 @@ class BuildRequestCard extends StatelessWidget {
                   child: Text("Decline", style: TextStyle(color: Colors.white)),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const IssueDetails()),
-                    );
+                  onPressed: () async {
+                    // Fetch full request data from Firestore
+                    var requestDoc = await FirebaseFirestore.instance
+                        .collection('requests')
+                        .doc(requestId)
+                        .get();
+                    if (requestDoc.exists) {
+                      var requestData =
+                          requestDoc.data() as Map<String, dynamic>;
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ClientIssueDetails(),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Request not found")),
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF001E62)),
@@ -237,12 +249,11 @@ class BuildRequestCard extends StatelessWidget {
           .add({
         'car_no': data['car_no'],
         'selected_vehicle': data['selected_vehicle'],
-        'car_color': data['Vehicle_color'],
+        'car_color': data['car_color'],
         'selected_service': data['selected_service'],
-        'car_no': data['Vehicle_no'],
+        'car_no': data['car_no'],
         'timestamp': FieldValue.serverTimestamp(),
       });
-
       // Update the request status to 'accepted'
       await FirebaseFirestore.instance
           .collection('requests')

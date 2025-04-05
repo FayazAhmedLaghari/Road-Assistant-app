@@ -62,9 +62,7 @@ class _RequestConfirmationState extends State<RequestConfirmation> {
       print("Form validation failed");
       return;
     }
-
     print("Saving request to Firestore...");
-
     try {
       // Get current user ID from Firebase Authentication
       String? userId = FirebaseAuth.instance.currentUser?.uid;

@@ -115,7 +115,9 @@ class _CompanyDrawerState extends State<CompanyDrawer> {
                     context,
                     iconPath: 'assets/client_issue.png',
                     title: "Client Issue Details",
-                    destination: IssueDetails(),
+                    destination: IssueDetails(
+                      requestData: {},
+                    ),
                   ),
                   buildMenuItem(
                     context,

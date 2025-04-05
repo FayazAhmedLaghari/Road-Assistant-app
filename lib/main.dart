@@ -1,7 +1,8 @@
 import 'package:firebase_app/firebase_options.dart';
-
 import 'package:firebase_app/lib/Company%20Side/SplashScreen.dart';
 import 'package:firebase_app/lib/Company%20Side/Tabbar.dart';
+import 'package:firebase_app/lib/Company%20Side/client_issue_details.dart';
+import 'package:firebase_app/lib/Company%20Side/issue_details.dart';
 import 'package:firebase_app/lib/Company%20Side/tow_service.dart';
 import 'package:firebase_app/lib/User%20Side/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -40,6 +41,7 @@ class MyApp extends StatelessWidget {
         // and then invoke "hot reload" (save your changes or press the "hot
         // reload" button in a Flutter-supported IDE, or press "r" if you used
         // the command line to start the app).
+
         //
         // Notice that the counter didn't reset back to zero; the application
         // state is not lost during the reload. To reset the state, use hot
@@ -50,7 +52,9 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: Splashscreen(),
+      home: Hometab(
+        companyAddress: '',
+      ),
     );
   }
 }

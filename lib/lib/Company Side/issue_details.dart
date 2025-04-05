@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'client_issue_details.dart';
 
 class IssueDetails extends StatelessWidget {
-  const IssueDetails({super.key});
+  const IssueDetails({super.key, required Map<String, dynamic> requestData});
 
   @override
   Widget build(BuildContext context) {
@@ -170,14 +170,30 @@ class IssueDetails extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildButton(context, "Decline"),
-          _buildButton(context, "Accept"),
+          _buildButtonDec(context, "Decline"),
+          _buildButtonAce(context, "Accept"),
         ],
       ),
     );
   }
 
-  Widget _buildButton(BuildContext context, String text) {
+  Widget _buildButtonDec(BuildContext context, String text) {
+    return ElevatedButton(
+      onPressed: () {
+        Navigator.pop(context);
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF001E62),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        minimumSize: const Size(140, 45),
+      ),
+      child: Text(text,
+          style: const TextStyle(
+              fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+    );
+  }
+
+  Widget _buildButtonAce(BuildContext context, String text) {
     return ElevatedButton(
       onPressed: () {
         Navigator.push(

@@ -107,68 +107,73 @@ class _HometabState extends State<Hometab> {
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Icon(Icons.location_on,
                   color: isAvailable ? Color(0xFF001E62) : Colors.grey),
-              SizedBox(width: 6),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isAvailable
-                        ? (widget.companyAddress ?? "Fetching location...")
-                        : "Unavailable",
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: isAvailable ? Colors.black : Colors.grey),
-                  ),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time,
-                          size: 14,
-                          color: isAvailable ? Colors.grey : Colors.grey[400]),
-                      SizedBox(width: 4),
-                      Text(
-                        isAvailable
-                            ? (loginTime ?? "09:00 AM - 5:00 PM")
-                            : "Unavailable",
-                        style: TextStyle(
-                            fontSize: 12,
+              SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isAvailable
+                          ? (companyAddress ?? "Fetching location...")
+                          : "Unavailable",
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isAvailable ? Colors.black : Colors.grey),
+                    ),
+                    SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.access_time,
+                            size: 14,
                             color:
                                 isAvailable ? Colors.grey : Colors.grey[400]),
-                      ),
-                    ],
-                  ),
-                ],
+                        SizedBox(width: 4),
+                        Text(
+                          isAvailable
+                              ? (loginTime ?? "09:00 AM - 5:00 PM")
+                              : "Unavailable",
+                          style: TextStyle(
+                              fontSize: 12,
+                              color:
+                                  isAvailable ? Colors.grey : Colors.grey[400]),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          SizedBox(
-            width: 3,
-          ),
-          Expanded(
-            child: InkWell(
+          SizedBox(height: 12),
+          Center(
+            child: GestureDetector(
               onTap: _toggleAvailability,
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 3),
+                width: 160,
+                height: 40,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: isAvailable ? Color(0xFF001E62) : Colors.red,
-                  borderRadius: BorderRadius.circular(10),
+                  color: isAvailable ? Color(0xFF001E62) : Colors.redAccent,
+                  borderRadius: BorderRadius.circular(30),
                 ),
                 child: Text(
                   isAvailable ? "Available" : "Unavailable",
                   style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold),
                 ),
               ),
             ),
-          ),
+          )
         ],
       ),
     );
