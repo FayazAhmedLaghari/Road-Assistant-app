@@ -14,6 +14,7 @@ class _RequestServiceScreenState extends State<RequestServiceScreen> {
   String? selectedService;
   String? selectedVehicle;
   bool isLoading = true;
+
   @override
   void initState() {
     super.initState();
@@ -56,28 +57,49 @@ class _RequestServiceScreenState extends State<RequestServiceScreen> {
         setState(() {
           selectedVehicle = vehicle;
         });
-        FirebaseFirestore.instance
-            .collection('userSelectedVehicle')
-            .doc('currentVehicle')
-            .set({'vehicle': vehicle});
         Navigator.pop(context);
         fetchServices(vehicle);
       },
     );
   }
 
-  // Fetch services for the selected vehicle
-  void fetchServices(String vehicleType) async {
+  // Local hardcoded services based on vehicle type
+  void fetchServices(String vehicleType) {
     setState(() => isLoading = true);
 
-    QuerySnapshot querySnapshot =
-        await FirebaseFirestore.instance.collection('selectedServices').get();
-    List<Map<String, dynamic>> fetchedServices = querySnapshot.docs
-        .map((doc) => {
-              "name": doc["service"],
-              "icon": _getServiceIcon(doc["service"]), // Fetch icon dynamically
-            })
-        .toList();
+    List<Map<String, dynamic>> fetchedServices = [];
+
+    if (vehicleType == 'Car') {
+      fetchedServices = [
+             {"name": "Flat Tire", "icon": Icons.tire_repair},
+      {"name": "Battery Jump Start", "icon": Icons.battery_charging_full},
+      {"name": "Towing Service", "icon": Icons.local_shipping},
+      {"name": "Engine Overheating", "icon": Icons.warning},
+      {"name": "Brake Issue", "icon": Icons.car_repair},
+      {"name": "Oil Change", "icon": Icons.oil_barrel},
+      {"name": "AC Repair", "icon": Icons.ac_unit},
+      ];
+    } else if (vehicleType == 'Motorcycle') {
+      fetchedServices = [
+        {"name": "Flat Tire", "icon": Icons.tire_repair},
+      {"name": "Chain Adjustment", "icon": Icons.build},
+      {"name": "Battery Issue", "icon": Icons.battery_alert},
+      {"name": "Engine Tune-Up", "icon": Icons.engineering},
+      {"name": "Brake Pad Change", "icon": Icons.settings},
+      {"name": "Clutch Repair", "icon": Icons.precision_manufacturing},
+      {"name": "Light Issue", "icon": Icons.lightbulb},
+      ];
+    } else if (vehicleType == 'Rickshaw') {
+      fetchedServices = [
+        {"name": "Battery Problem", "icon": Icons.battery_alert},
+      {"name": "Flat Tire", "icon": Icons.tire_repair},
+      {"name": "Towing Service", "icon": Icons.local_shipping},
+      {"name": "Engine Repair", "icon": Icons.miscellaneous_services},
+      {"name": "Meter Issue", "icon": Icons.speed},
+      {"name": "Brake Problem", "icon": Icons.car_repair},
+      {"name": "Seat Repair", "icon": Icons.event_seat},
+      ];
+    }
 
     setState(() {
       services = fetchedServices;
@@ -85,27 +107,7 @@ class _RequestServiceScreenState extends State<RequestServiceScreen> {
     });
   }
 
-  // Map services to their respective icons
-  IconData _getServiceIcon(String service) {
-    switch (service) {
-      case "Flat tire":
-        return Icons.tire_repair;
-      case "Towing Service":
-        return Icons.local_shipping;
-      case "Engine Heat":
-        return Icons.warning;
-      case "Battery Jump Start":
-        return Icons.battery_charging_full;
-      case "Engine Check":
-        return Icons.settings;
-      case "Key Lock":
-        return Icons.vpn_key;
-      default:
-        return Icons.miscellaneous_services;
-    }
-  }
-
-  // Save selected service
+  // Save selected service to Firestore
   void saveSelectedService() async {
     if (selectedService != null) {
       await FirebaseFirestore.instance
@@ -275,7 +277,19 @@ class _RequestServiceScreenState extends State<RequestServiceScreen> {
     return Shimmer.fromColors(
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
-      child: Container(color: Colors.white, height: 50, width: double.infinity),
+      child: GridView.builder(
+        itemCount: 4,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16),
+        itemBuilder: (context, index) {
+          return Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+          );
+        },
+      ),
     );
   }
 }

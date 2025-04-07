@@ -3,9 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'Drawer.dart';
 import 'CompanyNotification.dart';
+import 'issue_details.dart';
 
-class TowServiceScreen extends StatelessWidget {
+class TowServiceScreen extends StatefulWidget {
   const TowServiceScreen({super.key});
+
+  @override
+  State<TowServiceScreen> createState() => _TowServiceScreenState();
+}
+
+class _TowServiceScreenState extends State<TowServiceScreen> {
+  List<String> acceptedRequestIds = [];
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +120,7 @@ class TowServiceScreen extends StatelessWidget {
           return Center(child: Text("No any new rides for you"));
         }
 
-        var requests = snapshot.data!.docs;
+        var requests = snapshot.data!.docs.where((doc) => !acceptedRequestIds.contains(doc.id)).toList();
 
         return ListView.builder(
           shrinkWrap: true,
@@ -121,23 +129,20 @@ class TowServiceScreen extends StatelessWidget {
           itemBuilder: (context, index) {
             var request = requests[index];
             var data = request.data() as Map<String, dynamic>;
-            // Debugging: Print document data
-            print("Document Data: $data");
+
             return BuildRequestCard(
               requestId: request.id,
-              carNo: data.containsKey('car_no') ? data['car_no'] : 'Unknown',
-              selected_vehicle: data.containsKey('selected_vehicle')
-                  ? data['selected_vehicle']
-                  : 'No Vehicle',
-              car_color: data.containsKey('car_color')
-                  ? data['car_color']
-                  : 'No Color',
-              selected_service: data.containsKey('selected_service')
-                  ? data['selected_service']
-                  : 'No service',
-              car_no: data.containsKey('car_no')
-                  ? data['car_no']
-                  : 'No Vehicle Number',
+              user_name: data['user_id'] ?? 'Unknown', // Assuming 'user_id' is in the request data
+              carNo: data['car_no'] ?? 'Unknown',
+              selected_vehicle: data['selected_vehicle'] ?? 'No Vehicle',
+              car_color: data['car_color'] ?? 'No Color',
+              selected_service: data['selected_service'] ?? 'No Service',
+              car_no: data['car_no'] ?? 'No Vehicle Number',
+              onAccepted: () {
+                setState(() {
+                  acceptedRequestIds.add(request.id); // Add to the accepted list to hide it
+                });
+              },
             );
           },
         );
@@ -153,6 +158,8 @@ class BuildRequestCard extends StatelessWidget {
   final String car_color;
   final String selected_service;
   final String car_no;
+  final String user_name;
+  final VoidCallback onAccepted;
 
   const BuildRequestCard({
     required this.requestId,
@@ -161,6 +168,8 @@ class BuildRequestCard extends StatelessWidget {
     required this.car_color,
     required this.selected_service,
     required this.car_no,
+    required this.onAccepted,
+    required this.user_name, // user_name passed in this constructor
     Key? key,
   }) : super(key: key);
 
@@ -176,10 +185,36 @@ class BuildRequestCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("$carNo",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance
+                  .collection('users') // Assuming 'users' collection holds user data
+                  .doc(user_name) // This should be the user ID stored in the request
+                  .get(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator();
+                }
+
+                if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                }
+
+                if (!snapshot.hasData || !snapshot.data!.exists) {
+                  return Text("User not found");
+                }
+
+                var userData = snapshot.data!.data() as Map<String, dynamic>;
+                String userFullName = userData['name'] ?? 'Unknown User';
+
+                return Text(
+                  userFullName,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                );
+              },
+            ),
             SizedBox(height: 4),
-            Text("$selected_vehicle | $car_color | $selected_service | $car_no",
+            Text(
+                "$selected_vehicle |  $selected_service | $car_no | $car_color ",
                 style: TextStyle(color: Colors.grey[700])),
             SizedBox(height: 8),
             Row(
@@ -188,7 +223,7 @@ class BuildRequestCard extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () => _acceptRequest(context),
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF001E62)),
+                      backgroundColor: Color.fromARGB(255, 16, 19, 27)),
                   child: Text("Accept", style: TextStyle(color: Colors.white)),
                 ),
                 ElevatedButton(
@@ -199,19 +234,17 @@ class BuildRequestCard extends StatelessWidget {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    // Fetch full request data from Firestore
                     var requestDoc = await FirebaseFirestore.instance
                         .collection('requests')
                         .doc(requestId)
                         .get();
                     if (requestDoc.exists) {
-                      var requestData =
-                          requestDoc.data() as Map<String, dynamic>;
-
+                      var requestData = requestDoc.data() as Map<String, dynamic>;
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ClientIssueDetails(),
+                          builder: (context) =>
+                              IssueDetails(requestData: requestData),
                         ),
                       );
                     } else {
@@ -233,48 +266,42 @@ class BuildRequestCard extends StatelessWidget {
   }
 
   void _acceptRequest(BuildContext context) async {
-    // Fetch the request details from Firestore
     var requestDoc = await FirebaseFirestore.instance
         .collection('requests')
         .doc(requestId)
         .get();
+
     if (requestDoc.exists) {
       var data = requestDoc.data() as Map<String, dynamic>;
 
-      // Add to the accepted_services collection
+      // Add to company's service_requests collection
       await FirebaseFirestore.instance
           .collection('Company')
-          .doc("YOUR_COMPANY_ID") // Replace with your company ID
-          .collection('accepted_services')
+          .doc("YOUR_COMPANY_ID") // Replace with actual ID
+          .collection('service_requests')
           .add({
         'car_no': data['car_no'],
         'selected_vehicle': data['selected_vehicle'],
         'car_color': data['car_color'],
         'selected_service': data['selected_service'],
-        'car_no': data['car_no'],
-        'timestamp': FieldValue.serverTimestamp(),
+        'timestamp': Timestamp.now(),
       });
-      // Update the request status to 'accepted'
-      await FirebaseFirestore.instance
-          .collection('requests')
-          .doc(requestId)
-          .update({'status': 'accepted'});
 
-      // Delete the request from the current list
+      // Don't delete the request, just mark it as accepted
       await FirebaseFirestore.instance
           .collection('requests')
           .doc(requestId)
-          .delete();
+          .update({'status': 'Accepted'});
+
+      onAccepted(); // Update UI
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text("Request accepted and moved to service history")),
+        SnackBar(content: Text("Request moved to service requests")),
       );
     }
   }
 
   void _deleteRequest(BuildContext context) async {
-    // Delete the request without accepting it
     await FirebaseFirestore.instance
         .collection('requests')
         .doc(requestId)

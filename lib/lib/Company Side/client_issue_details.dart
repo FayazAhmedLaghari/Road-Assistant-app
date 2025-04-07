@@ -2,10 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'issue_details.dart';
-
 class ClientIssueDetails extends StatelessWidget {
   const ClientIssueDetails({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,52 +19,66 @@ class ClientIssueDetails extends StatelessWidget {
             return const Center(child: Text("No client issues found."));
           }
           var issueData = snapshot.data!.docs.first;
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context),
-                _buildCard(
-                  title: "Vehicle Details",
+          String userId = issueData['user_id']; // Assuming the user_id is in the request data
+
+          // Fetch user data for vehicle owner
+          return FutureBuilder<DocumentSnapshot>(
+            future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
+            builder: (context, userSnapshot) {
+              if (userSnapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                return const Center(child: Text("User not found"));
+              }
+
+              var userData = userSnapshot.data!.data() as Map<String, dynamic>;
+              var ownerName = userData['name'] ?? 'Unknown Owner'; // Get vehicle owner's name
+
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildDetailRow("Vehicle Owner", issueData['car_no']),
-                    _buildDetailRow(
-                        "Vehicle Type", issueData['selected_service']),
-                    _buildDetailRow(
-                        "Vehicle Name", issueData['selected_vehicle']),
-                    _buildDetailRow("Vehicle Color", issueData['car_color']),
-                  ],
-                ),
-                _buildCard(
-                  title: "Client Service Request",
-                  children: [
-                    _buildDetailRow("Client Issue Type", issueData['details']),
-                    _buildDetailRow("Client Location", issueData['location'],
-                        isLink: true),
-                    _buildDetailRow("Client Contact", issueData['contact_no']),
-                  ],
-                ),
-                _buildCard(
-                  title: "Client Added Text",
-                  children: [
-                    const Text(
-                      "description :",
-                      style:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    _buildHeader(context),
+                    _buildCard(
+                      title: "Vehicle Details",
+                      children: [
+                        _buildDetailRow("Vehicle Owner", ownerName), // Display owner name
+                        _buildDetailRow("Vehicle Type", issueData['selected_service']),
+                        _buildDetailRow("Vehicle Name", issueData['selected_vehicle']),
+                        _buildDetailRow("Vehicle Color", issueData['car_color']),
+                      ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        issueData['details'] ?? "No description provided.",
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w500),
-                      ),
+                    _buildCard(
+                      title: "Client Service Request",
+                      children: [
+                        _buildDetailRow("Client Issue Type", issueData['details']),
+                        _buildDetailRow("Client Location", issueData['location'], isLink: true),
+                        _buildDetailRow("Client Contact", issueData['contact_no']),
+                      ],
                     ),
-                    _buildButtons(context),
+                    _buildCard(
+                      title: "Client Added Text",
+                      children: [
+                        const Text(
+                          "description :",
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            issueData['details'] ?? "No description provided.",
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        _buildButtons(context),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
+              );
+            },
           );
         },
       ),
@@ -92,10 +105,7 @@ class ClientIssueDetails extends StatelessWidget {
                 onPressed: () => Navigator.pop(context)),
             const Text(
               "Client Issue Details",
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.black),
             ),
             IconButton(icon: const Icon(Icons.notifications), onPressed: () {}),
           ],
@@ -111,16 +121,14 @@ class ClientIssueDetails extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(title,
-              style:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
           child: Card(
             color: Colors.white,
             elevation: 3,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             child: Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
@@ -142,22 +150,16 @@ class ClientIssueDetails extends StatelessWidget {
         children: [
           Text(label,
               style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black)),
+                  fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black)),
           const Text(":",
-              style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600)),
+              style: TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w600)),
           Text(
             value,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: isLink ? const Color(0xFF001E62) : Colors.grey,
-              decoration:
-                  isLink ? TextDecoration.underline : TextDecoration.none,
+              decoration: isLink ? TextDecoration.underline : TextDecoration.none,
             ),
           ),
         ],
@@ -191,8 +193,7 @@ class ClientIssueDetails extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(
-            fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
       ),
     );
   }

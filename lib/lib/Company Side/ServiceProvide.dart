@@ -31,14 +31,14 @@ class _ServiceProvideState extends State<ServiceProvide> {
       {"name": "Clutch Repair", "icon": Icons.precision_manufacturing},
       {"name": "Light Issue", "icon": Icons.lightbulb},
     ],
-    "Rickshaw": [
-      {"name": "Battery Problem", "icon": Icons.battery_alert},
+    "Rickshaw": [{"name": "Battery Problem", "icon": Icons.battery_alert},
       {"name": "Flat Tire", "icon": Icons.tire_repair},
       {"name": "Towing Service", "icon": Icons.local_shipping},
       {"name": "Engine Repair", "icon": Icons.miscellaneous_services},
       {"name": "Meter Issue", "icon": Icons.speed},
       {"name": "Brake Problem", "icon": Icons.car_repair},
       {"name": "Seat Repair", "icon": Icons.event_seat},
+      
     ],
   };
 

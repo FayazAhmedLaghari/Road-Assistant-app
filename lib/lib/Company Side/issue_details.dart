@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'client_issue_details.dart';
 
 class IssueDetails extends StatelessWidget {
-  const IssueDetails({super.key, required Map<String, dynamic> requestData});
+  final Map<String, dynamic> requestData;
+
+  const IssueDetails({super.key, required this.requestData});
 
   @override
   Widget build(BuildContext context) {
@@ -19,52 +20,72 @@ class IssueDetails extends StatelessWidget {
             return const Center(child: Text("No client issues found."));
           }
           var issueData = snapshot.data!.docs.first;
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context),
-                _buildCard(
-                  title: "Vehicle Details",
+
+          // Fetching user details (assuming 'user_id' is available in requestData)
+          return FutureBuilder<DocumentSnapshot>(
+            future: FirebaseFirestore.instance
+                .collection('users')
+                .doc(issueData['user_id']) // Replace 'user_id' with the actual field
+                .get(),
+            builder: (context, userSnapshot) {
+              if (userSnapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              }
+
+              if (userSnapshot.hasError) {
+                return Center(child: Text("Error: ${userSnapshot.error}"));
+              }
+
+              if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                return Center(child: Text("User not found"));
+              }
+
+              var userData = userSnapshot.data!.data() as Map<String, dynamic>;
+              String vehicleOwner = userData['name'] ?? 'Unknown Owner'; // Assuming 'name' field exists in 'users' collection
+
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildDetailRow("Vehicle Owner", issueData['car_no']),
-                    _buildDetailRow(
-                        "Vehicle Type", issueData['selected_service']),
-                    _buildDetailRow(
-                        "Vehicle Name", issueData['selected_vehicle']),
-                    _buildDetailRow("Vehicle Color", issueData['car_color']),
-                  ],
-                ),
-                _buildCard(
-                  title: "Client Service Request",
-                  children: [
-                    _buildDetailRow("Client Issue Type", issueData['details']),
-                    _buildDetailRow("Client Location", issueData['location'],
-                        isLink: true),
-                    _buildDetailRow("Client Contact", issueData['contact_no']),
-                  ],
-                ),
-                _buildCard(
-                  title: "Client Added Text",
-                  children: [
-                    const Text(
-                      "description :",
-                      style:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    _buildHeader(context),
+                    _buildCard(
+                      title: "Vehicle Details",
+                      children: [
+                        _buildDetailRow("Vehicle Owner", vehicleOwner), // Displaying vehicle owner's name
+                        _buildDetailRow("Vehicle Type", issueData['selected_service']),
+                        _buildDetailRow("Vehicle Name", issueData['selected_vehicle']),
+                        _buildDetailRow("Vehicle Color", issueData['car_color']),
+                      ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        issueData['details'] ?? "No description provided.",
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w500),
-                      ),
+                    _buildCard(
+                      title: "Client Service Request",
+                      children: [
+                        _buildDetailRow("Client Issue Type", issueData['details']),
+                        _buildDetailRow("Client Location", issueData['location'], isLink: true),
+                        _buildDetailRow("Client Contact", issueData['contact_no']),
+                      ],
+                    ),
+                    _buildCard(
+                      title: "Client Added Text",
+                      children: [
+                        const Text(
+                          "description :",
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            issueData['details'] ?? "No description provided.",
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        _buildButtons(context),
+                      ],
                     ),
                   ],
                 ),
-                _buildButtons(context),
-              ],
-            ),
+              );
+            },
           );
         },
       ),
@@ -179,8 +200,26 @@ class IssueDetails extends StatelessWidget {
 
   Widget _buildButtonDec(BuildContext context, String text) {
     return ElevatedButton(
-      onPressed: () {
-        Navigator.pop(context);
+      onPressed: () async {
+        var snapshot = await FirebaseFirestore.instance.collection('requests').get();
+        if (snapshot.docs.isNotEmpty) {
+          var doc = snapshot.docs.first;
+          var docId = doc.id;
+
+          // Firestore se request delete karo
+          await FirebaseFirestore.instance
+              .collection('requests')
+              .doc(docId)
+              .delete();
+
+          // Snackbar show karo
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Request removed')),
+          );
+
+          // Pop back to previous screen
+          Navigator.pop(context);
+        }
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFF001E62),
@@ -195,11 +234,39 @@ class IssueDetails extends StatelessWidget {
 
   Widget _buildButtonAce(BuildContext context, String text) {
     return ElevatedButton(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ClientIssueDetails()),
-        );
+      onPressed: () async {
+        // Fetch first document from requests collection (just as in your builder)
+        var snapshot = await FirebaseFirestore.instance.collection('requests').get();
+        if (snapshot.docs.isNotEmpty) {
+          var doc = snapshot.docs.first;
+          var data = doc.data();
+          var docId = doc.id;
+
+          // Add to company's service_requests collection
+          await FirebaseFirestore.instance
+              .collection('Company')
+              .doc("YOUR_COMPANY_ID") // Replace with your actual company ID
+              .collection('service_requests')
+              .doc(docId)
+              .set({
+                ...data,
+                'timestamp': FieldValue.serverTimestamp(),
+                'status': 'Accepted'
+              });
+
+          // Optionally, update the status in original document
+          await FirebaseFirestore.instance
+              .collection('requests')
+              .doc(docId)
+              .update({'status': 'Accepted'});
+
+          // Show a confirmation message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Client request has been accepted.')),
+          );
+
+          Navigator.pop(context); // Or navigate to Track screen
+        }
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFF001E62),
