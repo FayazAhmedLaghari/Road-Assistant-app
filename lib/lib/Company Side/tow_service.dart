@@ -265,41 +265,53 @@ class BuildRequestCard extends StatelessWidget {
     );
   }
 
-  void _acceptRequest(BuildContext context) async {
-    var requestDoc = await FirebaseFirestore.instance
-        .collection('requests')
-        .doc(requestId)
-        .get();
+ void _acceptRequest(BuildContext context) async {
+  try {
+    // Reference to the specific request document
+    DocumentReference requestRef =
+        FirebaseFirestore.instance.collection('requests').doc(requestId);
+
+    // Fetch the request document
+    DocumentSnapshot requestDoc = await requestRef.get();
 
     if (requestDoc.exists) {
       var data = requestDoc.data() as Map<String, dynamic>;
 
-      // Add to company's service_requests collection
-      await FirebaseFirestore.instance
+      // Reference to the company's service_requests subcollection
+      CollectionReference serviceRequestsRef = FirebaseFirestore.instance
           .collection('Company')
-          .doc("YOUR_COMPANY_ID") // Replace with actual ID
-          .collection('service_requests')
-          .add({
-        'car_no': data['car_no'],
-        'selected_vehicle': data['selected_vehicle'],
-        'car_color': data['car_color'],
-        'selected_service': data['selected_service'],
-        'timestamp': Timestamp.now(),
+          .doc("YOUR_COMPANY_ID") // Replace with your actual company ID
+          .collection('service_requests');
+
+      // Add the request data to the service_requests subcollection
+      await serviceRequestsRef.doc(requestId).set({
+        ...data,
+        'timestamp': FieldValue.serverTimestamp(),
+        'status': 'Accepted',
       });
 
-      // Don't delete the request, just mark it as accepted
-      await FirebaseFirestore.instance
-          .collection('requests')
-          .doc(requestId)
-          .update({'status': 'Accepted'});
+      // Update the status of the original request document
+      await requestRef.update({'status': 'Accepted'});
 
-      onAccepted(); // Update UI
+      // Update the UI to remove the accepted request
+      onAccepted();
 
+      // Show a confirmation message
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Request moved to service requests")),
+        SnackBar(content: Text("Request has been accepted.")),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Request not found.")),
       );
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("An error occurred: $e")),
+    );
   }
+}
+
 
   void _deleteRequest(BuildContext context) async {
     await FirebaseFirestore.instance
