@@ -1,20 +1,10 @@
 import 'package:firebase_app/firebase_options.dart';
 import 'package:firebase_app/lib/Company%20Side/SplashScreen.dart';
-import 'package:firebase_app/lib/Company%20Side/Tabbar.dart';
-import 'package:firebase_app/lib/Company%20Side/client_issue_details.dart';
-import 'package:firebase_app/lib/Company%20Side/issue_details.dart';
-import 'package:firebase_app/lib/Company%20Side/tow_service.dart';
+import 'package:firebase_app/lib/User%20Side/HelpSupport.dart';
 import 'package:firebase_app/lib/User%20Side/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_app/lib/Company%20Side/CompanyProfile.dart';
-import 'package:firebase_app/lib/User%20Side/UserProfile.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
-import 'lib/Company Side/Location_Picker.dart';
-import 'lib/Company Side/Personality_Identity.dart';
-import 'lib/Company Side/SplashScreen.dart';
-import 'lib/Company Side/Tabbar.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,10 +42,10 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: Hometab(
-        companyAddress: '',
-      ),
-      // home: Splashscreen(),
+      // home: Hometab(
+      //   companyAddress: '',
+      // ),
+      home: Splashscreen(),
     );
   }
 }

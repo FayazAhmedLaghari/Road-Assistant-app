@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-
+import 'package:url_launcher/url_launcher.dart';
 import 'home_screen.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({Key? key}) : super(key: key);
+
+  final String phoneNumber = "+92 3443680807"; // Replace with actual number
+  final String whatsappMessage = "Hello! I’d like to ask about your services.";
 
   @override
   Widget build(BuildContext context) {
@@ -26,17 +29,11 @@ class HelpSupportScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.black),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HomeScreen(),
-                      ),
-                    );
-                  },
+                          onPressed: () => Navigator.pop(context),
+                 
                 ),
                 const SizedBox(height: 16),
-                Center(
+                const Center(
                   child: Text(
                     'Help & Support',
                     style: TextStyle(
@@ -78,14 +75,15 @@ class HelpSupportScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 30),
+                  // Contact Us -> CALL
                   SizedBox(
                     width: double.infinity,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () => _handleButtonPress("Call"),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF001E62),
+                          backgroundColor: const Color(0xFF001E62),
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8.0),
@@ -99,14 +97,13 @@ class HelpSupportScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 15),
+                  // FAQ -> WhatsApp Message
                   SizedBox(
                     width: double.infinity,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: OutlinedButton(
-                        onPressed: () {
-                          // Add FAQ functionality here
-                        },
+                        onPressed: () => _handleButtonPress("Message"),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFF001E62)),
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -116,13 +113,13 @@ class HelpSupportScreen extends StatelessWidget {
                         ),
                         child: const Text(
                           'Frequently Asked Questions',
-                          style:
-                              TextStyle(fontSize: 18, color: Color(0xFF001E62)),
+                          style: TextStyle(
+                              fontSize: 18, color: Color(0xFF001E62)),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16), // Slight spacing at the end
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
@@ -130,5 +127,24 @@ class HelpSupportScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _handleButtonPress(String type) async {
+    if (type == "Message") {
+      final whatsappUrl = Uri.parse(
+          "https://wa.me/${phoneNumber.replaceAll('+', '')}?text=${Uri.encodeComponent(whatsappMessage)}");
+      if (await canLaunchUrl(whatsappUrl)) {
+        await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+      } else {
+        debugPrint("Could not launch WhatsApp");
+      }
+    } else if (type == "Call") {
+      final callUrl = Uri.parse("tel:$phoneNumber");
+      if (await canLaunchUrl(callUrl)) {
+        await launchUrl(callUrl);
+      } else {
+        debugPrint("Could not open dialer");
+      }
+    }
   }
 }

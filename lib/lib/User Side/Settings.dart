@@ -1,7 +1,10 @@
+import 'package:firebase_app/lib/User%20Side/HelpSupport.dart';
 import 'package:flutter/material.dart';
 import 'Changepassword.dart';
 import 'Register.dart';
 import 'Request/Feedback.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -44,7 +47,6 @@ class _SettingScreenState extends State<SettingScreen> {
                 top: 80,
                 child: Text(
                   "Settings",
-                  textAlign: TextAlign.start,
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -78,7 +80,7 @@ class _SettingScreenState extends State<SettingScreen> {
                           color: Color(0xFF001E62)),
                     ),
                     trailing: Transform.scale(
-                      scale: 0.8, // Reduced switch size
+                      scale: 0.8,
                       child: Switch(
                         activeColor: Color(0xFF001E62),
                         value: isNotificationsEnabled,
@@ -102,20 +104,60 @@ class _SettingScreenState extends State<SettingScreen> {
                 buildSettingsButton('Help & Feedback', () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => FeedbackScreen()),
+                    MaterialPageRoute(builder: (context) => HelpSupportScreen()),
                   );
                 }),
                 SizedBox(height: 60),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => RegistrationScreen(),
-                        ),
-                      );
+                    onPressed: () async {
+                      final auth = FirebaseAuth.instance;
+                      final firestore = FirebaseFirestore.instance;
+                      final user = auth.currentUser;
+
+                      if (user != null) {
+                        print("User found: ${user.uid}");
+
+                        try {
+                          await firestore
+                              .collection('users')
+                              .doc(user.uid)
+                              .delete();
+                          print("User document deleted from Firestore");
+
+                          await user.delete();
+                          print("User deleted from FirebaseAuth");
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content:
+                                    Text("Account deleted successfully")),
+                          );
+
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => RegistrationScreen()),
+                            (route) => false,
+                          );
+                        } on FirebaseAuthException catch (e) {
+                          if (e.code == 'requires-recent-login') {
+                            print("Requires recent login");
+
+                            _showReauthDialog(context, user.email!);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Error: ${e.message}")),
+                            );
+                          }
+                        } catch (e) {
+                          print("Error: $e");
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Error: $e")),
+                          );
+                        }
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
@@ -169,6 +211,71 @@ class _SettingScreenState extends State<SettingScreen> {
         ),
         onTap: onTap,
       ),
+    );
+  }
+
+  void _showReauthDialog(BuildContext context, String email) {
+    final passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Re-authenticate'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Please enter your password to continue.'),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: InputDecoration(labelText: 'Password'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () => Navigator.pop(context),
+            ),
+            ElevatedButton(
+              child: Text('Confirm'),
+              onPressed: () async {
+                final password = passwordController.text.trim();
+                Navigator.pop(context);
+
+                try {
+                  final user = FirebaseAuth.instance.currentUser;
+                  final cred = EmailAuthProvider.credential(
+                      email: email, password: password);
+
+                  await user!.reauthenticateWithCredential(cred);
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .delete();
+                  await user.delete();
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Account deleted successfully")),
+                  );
+
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => RegistrationScreen()),
+                    (route) => false,
+                  );
+                } on FirebaseAuthException catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Error: ${e.message}")),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
