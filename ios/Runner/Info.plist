@@ -26,6 +26,14 @@
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>We need access to your photo library so you can upload or edit your profile picture.</string>
+
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>We need your location to track your current location or the location of your company while using the app.</string>
+
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>We use your location to provide continuous tracking for your profile or company, even when the app is in the background.</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UISupportedInterfaceOrientations</key>
